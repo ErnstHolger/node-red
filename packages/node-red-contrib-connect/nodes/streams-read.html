@@ -1,0 +1,144 @@
+<script type="text/javascript">
+    RED.nodes.registerType('connect-streams-read', {
+        category: 'aveva',
+        color: '#2654c3',
+        defaults: {
+            name: { value: "" },
+            connect: { value: "", type: "connect-config", required: true },
+            streamId: { value: "" },
+            readMode: { value: "last" },
+            startIndex: { value: "" },
+            endIndex: { value: "" },
+            count: { value: 100, validate: RED.validators.number() }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-download",
+        label: function() {
+            return this.name || "Streams Read";
+        },
+        paletteLabel: "Streams Read",
+        labelStyle: function() {
+            return this.name ? "node_label_italic connect-white-text" : "connect-white-text";
+        },
+        oneditprepare: function() {
+            $("#node-input-readMode").on("change", function() {
+                var mode = $(this).val();
+                if (mode === "range" || mode === "interpolated") {
+                    $(".range-row").show();
+                } else {
+                    $(".range-row").hide();
+                }
+                if (mode === "window" || mode === "interpolated") {
+                    $(".count-row").show();
+                } else {
+                    $(".count-row").hide();
+                }
+            });
+            $("#node-input-readMode").trigger("change");
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="connect-streams-read">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-connect"><i class="fa fa-server"></i> Connection</label>
+        <input type="text" id="node-input-connect">
+    </div>
+    <div class="form-row">
+        <label for="node-input-streamId"><i class="fa fa-database"></i> Stream ID</label>
+        <input type="text" id="node-input-streamId" placeholder="Stream ID (or use msg.streamId)">
+    </div>
+    <div class="form-row">
+        <label for="node-input-readMode"><i class="fa fa-list"></i> Read Mode</label>
+        <select id="node-input-readMode" style="width:70%;">
+            <option value="last">Last Value</option>
+            <option value="first">First Value</option>
+            <option value="range">Range (by time)</option>
+            <option value="window">Window (last N values)</option>
+            <option value="interpolated">Interpolated</option>
+        </select>
+    </div>
+    <div class="form-row range-row">
+        <label for="node-input-startIndex"><i class="fa fa-calendar"></i> Start Index</label>
+        <input type="text" id="node-input-startIndex" placeholder="ISO timestamp or index">
+    </div>
+    <div class="form-row range-row">
+        <label for="node-input-endIndex"><i class="fa fa-calendar"></i> End Index</label>
+        <input type="text" id="node-input-endIndex" placeholder="ISO timestamp or index">
+    </div>
+    <div class="form-row count-row">
+        <label for="node-input-count"><i class="fa fa-hashtag"></i> Count</label>
+        <input type="text" id="node-input-count" placeholder="100">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="connect-streams-read">
+    <p>Reads data from AVEVA Connect streams.</p>
+
+    <h3>Properties</h3>
+    <dl class="message-properties">
+        <dt>Connection</dt>
+        <dd>The AVEVA Connect configuration node</dd>
+        <dt>Stream ID</dt>
+        <dd>ID of the stream to read from (can be overridden by msg.streamId)</dd>
+        <dt>Read Mode</dt>
+        <dd>How to read data: last, first, range, window, or interpolated</dd>
+    </dl>
+
+    <h3>Input</h3>
+    <dl class="message-properties">
+        <dt class="optional">streamId <span class="property-type">string</span></dt>
+        <dd>Override stream ID from config</dd>
+        <dt class="optional">readMode <span class="property-type">string</span></dt>
+        <dd>Override read mode from config</dd>
+        <dt class="optional">startIndex <span class="property-type">string</span></dt>
+        <dd>Start timestamp for range queries</dd>
+        <dt class="optional">endIndex <span class="property-type">string</span></dt>
+        <dd>End timestamp for range queries</dd>
+        <dt class="optional">count <span class="property-type">number</span></dt>
+        <dd>Number of values to retrieve</dd>
+    </dl>
+
+    <h3>Output</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object | array</span></dt>
+        <dd>The stream data returned from AVEVA Connect</dd>
+        <dt>streamId <span class="property-type">string</span></dt>
+        <dd>The stream ID that was read</dd>
+        <dt>readMode <span class="property-type">string</span></dt>
+        <dd>The read mode that was used</dd>
+    </dl>
+
+    <h3>Read Modes</h3>
+    <ul>
+        <li><b>Last Value</b> - Get the most recent value</li>
+        <li><b>First Value</b> - Get the oldest value</li>
+        <li><b>Range</b> - Get values between start and end timestamps</li>
+        <li><b>Window</b> - Get the last N values</li>
+        <li><b>Interpolated</b> - Get interpolated values at regular intervals</li>
+    </ul>
+
+    <h3>Example - Read Last Value</h3>
+    <pre>msg.streamId = "Sensor1";
+msg.readMode = "last";</pre>
+
+    <h3>Example - Read Range</h3>
+    <pre>msg.streamId = "Sensor1";
+msg.readMode = "range";
+msg.startIndex = "2024-01-01T00:00:00Z";
+msg.endIndex = "2024-01-02T00:00:00Z";</pre>
+</script>
+
+<style>
+    .connect-white-text {
+        fill: #ffffff !important;
+    }
+    .red-ui-palette-node[data-palette-type="connect-streams-read"] .red-ui-palette-label {
+        color: #ffffff !important;
+    }
+</style>

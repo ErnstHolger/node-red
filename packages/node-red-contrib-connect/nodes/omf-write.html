@@ -1,0 +1,136 @@
+<script type="text/javascript">
+    RED.nodes.registerType('connect-omf-write', {
+        category: 'aveva',
+        color: '#2654c3',
+        defaults: {
+            name: { value: "" },
+            connect: { value: "", type: "connect-config", required: true },
+            messageType: { value: "data" },
+            action: { value: "create" },
+            compression: { value: "none" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-upload",
+        label: function() {
+            return this.name || "OMF Write";
+        },
+        paletteLabel: "OMF Write",
+        labelStyle: function() {
+            return this.name ? "node_label_italic connect-white-text" : "connect-white-text";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="connect-omf-write">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-connect"><i class="fa fa-server"></i> Connection</label>
+        <input type="text" id="node-input-connect">
+    </div>
+    <div class="form-row">
+        <label for="node-input-messageType"><i class="fa fa-envelope"></i> Message Type</label>
+        <select id="node-input-messageType" style="width:70%;">
+            <option value="type">Type (define types)</option>
+            <option value="container">Container (define streams)</option>
+            <option value="data">Data (send values)</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-action"><i class="fa fa-cog"></i> Action</label>
+        <select id="node-input-action" style="width:70%;">
+            <option value="create">Create</option>
+            <option value="update">Update</option>
+            <option value="delete">Delete</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-compression"><i class="fa fa-compress"></i> Compression</label>
+        <select id="node-input-compression" style="width:70%;">
+            <option value="none">None</option>
+            <option value="gzip">GZip</option>
+        </select>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="connect-omf-write">
+    <p>Writes data to AVEVA Connect using the OMF (OSIsoft Message Format) endpoint.</p>
+
+    <h3>Properties</h3>
+    <dl class="message-properties">
+        <dt>Connection</dt>
+        <dd>The AVEVA Connect configuration node</dd>
+        <dt>Message Type</dt>
+        <dd>OMF message type: type, container, or data</dd>
+        <dt>Action</dt>
+        <dd>OMF action: create, update, or delete</dd>
+        <dt>Compression</dt>
+        <dd>Optional GZip compression for payload</dd>
+    </dl>
+
+    <h3>Input</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object | array</span></dt>
+        <dd>OMF message payload</dd>
+        <dt class="optional">omfMessageType <span class="property-type">string</span></dt>
+        <dd>Override message type from config</dd>
+        <dt class="optional">omfAction <span class="property-type">string</span></dt>
+        <dd>Override action from config</dd>
+    </dl>
+
+    <h3>Output</h3>
+    <dl class="message-properties">
+        <dt>payload.success <span class="property-type">boolean</span></dt>
+        <dd>Whether the write succeeded</dd>
+        <dt>payload.statusCode <span class="property-type">number</span></dt>
+        <dd>HTTP status code from the API</dd>
+    </dl>
+
+    <h3>OMF Message Types</h3>
+    <ul>
+        <li><b>type</b> - Define data types (schema)</li>
+        <li><b>container</b> - Define streams (containers)</li>
+        <li><b>data</b> - Send actual data values</li>
+    </ul>
+
+    <h3>Example - Define Type</h3>
+    <pre>msg.payload = [{
+    "id": "Temperature",
+    "type": "object",
+    "classification": "dynamic",
+    "properties": {
+        "Timestamp": { "type": "string", "isindex": true, "format": "date-time" },
+        "Value": { "type": "number", "format": "float64" }
+    }
+}];
+msg.omfMessageType = "type";</pre>
+
+    <h3>Example - Define Container</h3>
+    <pre>msg.payload = [{
+    "id": "Sensor1",
+    "typeid": "Temperature"
+}];
+msg.omfMessageType = "container";</pre>
+
+    <h3>Example - Send Data</h3>
+    <pre>msg.payload = [{
+    "containerid": "Sensor1",
+    "values": [{
+        "Timestamp": new Date().toISOString(),
+        "Value": 23.5
+    }]
+}];
+msg.omfMessageType = "data";</pre>
+</script>
+
+<style>
+    .connect-white-text {
+        fill: #ffffff !important;
+    }
+    .red-ui-palette-node[data-palette-type="connect-omf-write"] .red-ui-palette-label {
+        color: #ffffff !important;
+    }
+</style>

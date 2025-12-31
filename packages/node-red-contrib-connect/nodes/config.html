@@ -1,0 +1,55 @@
+<script type="text/javascript">
+    RED.nodes.registerType('connect-config', {
+        category: 'config',
+        defaults: {
+            name: { value: "" },
+            resource: { value: "https://datahub.connect.aveva.com", required: true },
+            tenantId: { value: "", required: true },
+            namespaceId: { value: "", required: true },
+            apiVersion: { value: "v1" },
+            tokenUrl: { value: "https://datahub.connect.aveva.com/identity/connect/token" }
+        },
+        credentials: {
+            clientId: { type: "text" },
+            clientSecret: { type: "password" }
+        },
+        label: function() {
+            return this.name || this.tenantId || "AVEVA Connect";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="connect-config">
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-config-input-name" placeholder="AVEVA Connect">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-resource"><i class="fa fa-globe"></i> Resource URL</label>
+        <input type="text" id="node-config-input-resource" placeholder="https://datahub.connect.aveva.com">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-tenantId"><i class="fa fa-building"></i> Tenant ID</label>
+        <input type="text" id="node-config-input-tenantId" placeholder="your-tenant-id">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-namespaceId"><i class="fa fa-folder"></i> Namespace ID</label>
+        <input type="text" id="node-config-input-namespaceId" placeholder="your-namespace-id">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-clientId"><i class="fa fa-user"></i> Client ID</label>
+        <input type="text" id="node-config-input-clientId" placeholder="Client ID from AVEVA Connect">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-clientSecret"><i class="fa fa-key"></i> Client Secret</label>
+        <input type="password" id="node-config-input-clientSecret" placeholder="Client Secret">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-apiVersion"><i class="fa fa-code"></i> API Version</label>
+        <input type="text" id="node-config-input-apiVersion" placeholder="v1">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-tokenUrl"><i class="fa fa-lock"></i> Token URL</label>
+        <input type="text" id="node-config-input-tokenUrl" placeholder="https://datahub.connect.aveva.com/identity/connect/token">
+    </div>
+</script>

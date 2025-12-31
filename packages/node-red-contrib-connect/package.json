@@ -1,21 +1,36 @@
 {
   "name": "node-red-contrib-connect",
   "version": "0.1.0",
-  "description": "Node-RED nodes for connectivity utilities",
+  "description": "Node-RED nodes for AVEVA Connect (Data Hub, OMF, Streams)",
+  "author": {
+    "name": "Holger Amort"
+  },
   "keywords": [
     "node-red",
+    "aveva",
     "connect",
-    "connectivity"
+    "omf",
+    "osisoft",
+    "data-hub",
+    "streams",
+    "time-series"
   ],
   "license": "MIT",
+  "homepage": "https://github.com/ErnstHolger/node-red#readme",
+  "bugs": {
+    "url": "https://github.com/ErnstHolger/node-red/issues"
+  },
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "git+https://github.com/ErnstHolger/node-red.git"
   },
   "node-red": {
     "version": ">=2.0.0",
     "nodes": {
-      "connect": "nodes/connect.js"
+      "connect-config": "nodes/config.js",
+      "connect-omf-write": "nodes/omf-write.js",
+      "connect-streams-read": "nodes/streams-read.js",
+      "connect-events": "nodes/events.js"
     }
   },
   "engines": {
@@ -25,5 +40,7 @@
     "prepublishOnly": "npm test --if-present",
     "publish:dry": "npm publish --dry-run"
   },
-  "dependencies": {}
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
 }

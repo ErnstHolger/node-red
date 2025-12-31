@@ -1,0 +1,124 @@
+<script type="text/javascript">
+    RED.nodes.registerType('connect-events', {
+        category: 'aveva',
+        color: '#2654c3',
+        defaults: {
+            name: { value: "" },
+            connect: { value: "", type: "connect-config", required: true },
+            streamIds: { value: "" },
+            pollInterval: { value: 5000, validate: RED.validators.number() },
+            startOnDeploy: { value: true }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-bolt",
+        label: function() {
+            return this.name || "Events";
+        },
+        paletteLabel: "Events",
+        labelStyle: function() {
+            return this.name ? "node_label_italic connect-white-text" : "connect-white-text";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="connect-events">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-connect"><i class="fa fa-server"></i> Connection</label>
+        <input type="text" id="node-input-connect">
+    </div>
+    <div class="form-row">
+        <label for="node-input-streamIds"><i class="fa fa-database"></i> Stream IDs</label>
+        <input type="text" id="node-input-streamIds" placeholder="stream1, stream2, stream3">
+    </div>
+    <div class="form-row">
+        <label for="node-input-pollInterval"><i class="fa fa-clock-o"></i> Poll Interval</label>
+        <input type="text" id="node-input-pollInterval" placeholder="5000">
+        <span style="margin-left:8px; font-size:0.9em; color:#888;">ms</span>
+    </div>
+    <div class="form-row">
+        <label for="node-input-startOnDeploy"><i class="fa fa-play"></i> Auto Start</label>
+        <input type="checkbox" id="node-input-startOnDeploy" style="display:inline-block; width:auto; vertical-align:baseline;" checked>
+        <span style="margin-left:8px;">Start polling on deploy</span>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="connect-events">
+    <p>Subscribes to AVEVA Connect streams and emits messages when new data arrives.</p>
+
+    <h3>Properties</h3>
+    <dl class="message-properties">
+        <dt>Connection</dt>
+        <dd>The AVEVA Connect configuration node</dd>
+        <dt>Stream IDs</dt>
+        <dd>Comma-separated list of stream IDs to monitor</dd>
+        <dt>Poll Interval</dt>
+        <dd>How often to check for new data (in milliseconds)</dd>
+        <dt>Auto Start</dt>
+        <dd>Whether to start polling automatically on deploy</dd>
+    </dl>
+
+    <h3>Input (Control Messages)</h3>
+    <dl class="message-properties">
+        <dt>payload = "start" <span class="property-type">string</span></dt>
+        <dd>Start polling for events</dd>
+        <dt>payload = "stop" <span class="property-type">string</span></dt>
+        <dd>Stop polling for events</dd>
+        <dt>payload = "status" <span class="property-type">string</span></dt>
+        <dd>Get current polling status</dd>
+        <dt class="optional">streamIds <span class="property-type">string | array</span></dt>
+        <dd>Update the list of streams to monitor (with start command)</dd>
+    </dl>
+
+    <h3>Output</h3>
+    <dl class="message-properties">
+        <dt>topic <span class="property-type">string</span></dt>
+        <dd>The stream ID that has new data</dd>
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>The new data from the stream</dd>
+        <dt>streamId <span class="property-type">string</span></dt>
+        <dd>The stream ID</dd>
+        <dt>timestamp <span class="property-type">string</span></dt>
+        <dd>The timestamp of the new data</dd>
+        <dt>eventType <span class="property-type">string</span></dt>
+        <dd>Always "data" for data events</dd>
+    </dl>
+
+    <h3>Example - Start with Dynamic Streams</h3>
+    <pre>msg.payload = "start";
+msg.streamIds = ["Sensor1", "Sensor2", "Sensor3"];</pre>
+
+    <h3>Example - Stop Polling</h3>
+    <pre>msg.payload = "stop";</pre>
+
+    <h3>Example - Check Status</h3>
+    <pre>msg.payload = "status";
+// Output will contain:
+// {
+//   isPolling: true,
+//   pollInterval: 5000,
+//   streamIds: ["Sensor1", "Sensor2"],
+//   lastTimestamps: {...}
+// }</pre>
+
+    <h3>Notes</h3>
+    <ul>
+        <li>The node polls each stream for the last value and compares timestamps</li>
+        <li>Only new data (with a different timestamp) triggers an output message</li>
+        <li>The first poll after starting initializes the timestamps without emitting messages</li>
+        <li>Errors on individual streams are logged but don't stop polling other streams</li>
+    </ul>
+</script>
+
+<style>
+    .connect-white-text {
+        fill: #ffffff !important;
+    }
+    .red-ui-palette-node[data-palette-type="connect-events"] .red-ui-palette-label {
+        color: #ffffff !important;
+    }
+</style>
