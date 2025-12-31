@@ -5,7 +5,7 @@ allowed-tools: Bash, Read, Edit, Glob
 
 # Publish Node-RED Package to npm
 
-Automatically bump the version number and publish the current Node-RED package to npm.
+Automatically bump the version number, publish the current Node-RED package to npm, and push to GitHub.
 
 ## Steps
 
@@ -19,7 +19,9 @@ Automatically bump the version number and publish the current Node-RED package t
 
 5. **Publish to npm**: Run `npm publish` from the package directory.
 
-6. **Report result**: Confirm the new version was published successfully.
+6. **Commit and push to GitHub**: Commit the version bump with message "chore: Bump <package-name> to v<version>" and push to origin.
+
+7. **Report result**: Confirm the new version was published and pushed successfully.
 
 ## Usage
 
