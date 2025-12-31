@@ -1,0 +1,20 @@
+{
+  "name": "node-red-contrib-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo for Node-RED contribution packages",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "publish:all": "npm publish --workspaces",
+    "publish:dry": "npm publish --workspaces --dry-run",
+    "publish:questdb": "npm publish -w node-red-contrib-questdb",
+    "publish:compression": "npm publish -w node-red-contrib-compression",
+    "publish:connect": "npm publish -w node-red-contrib-connect"
+  },
+  "keywords": [
+    "node-red"
+  ],
+  "license": "MIT"
+}

@@ -1,0 +1,29 @@
+{
+  "name": "node-red-contrib-connect",
+  "version": "0.1.0",
+  "description": "Node-RED nodes for connectivity utilities",
+  "keywords": [
+    "node-red",
+    "connect",
+    "connectivity"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "node-red": {
+    "version": ">=2.0.0",
+    "nodes": {
+      "connect": "nodes/connect.js"
+    }
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "scripts": {
+    "prepublishOnly": "npm test --if-present",
+    "publish:dry": "npm publish --dry-run"
+  },
+  "dependencies": {}
+}

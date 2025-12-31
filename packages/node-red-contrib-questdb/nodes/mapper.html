@@ -1,0 +1,227 @@
+<script type="text/javascript">
+    RED.nodes.registerType('questdb-mapper', {
+        category: 'questdb',
+        color: '#a23154',
+        defaults: {
+            name: {value: ""},
+            tableName: {value: ""},
+            timestampField: {value: ""},
+            symbolMappings: {value: []},
+            columnMappings: {value: []}
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-exchange",
+        label: function() {
+            return this.name || "Mapper";
+        },
+        paletteLabel: "Mapper",
+        labelStyle: function() {
+            return this.name ? "node_label_italic questdb-white-text" : "questdb-white-text";
+        },
+        oneditprepare: function() {
+            const node = this;
+
+            // Symbol mappings list
+            const symbolList = $("#node-input-symbol-list").css({
+                'min-height': '100px',
+                'min-width': '400px'
+            }).editableList({
+                addItem: function(container, i, data) {
+                    const row = $('<div/>').appendTo(container);
+                    $('<input/>', {type: "text", placeholder: "msg.field", class: "symbol-source"})
+                        .css({width: "45%", marginRight: "5px"})
+                        .val(data.source || "")
+                        .appendTo(row);
+                    $('<span/>').text(" → ").appendTo(row);
+                    $('<input/>', {type: "text", placeholder: "symbol name", class: "symbol-target"})
+                        .css({width: "40%", marginLeft: "5px"})
+                        .val(data.target || "")
+                        .appendTo(row);
+                },
+                removable: true,
+                sortable: true
+            });
+
+            // Column mappings list
+            const columnList = $("#node-input-column-list").css({
+                'min-height': '100px',
+                'min-width': '400px'
+            }).editableList({
+                addItem: function(container, i, data) {
+                    const row = $('<div/>').appendTo(container);
+                    $('<input/>', {type: "text", placeholder: "msg.field", class: "column-source"})
+                        .css({width: "35%", marginRight: "5px"})
+                        .val(data.source || "")
+                        .appendTo(row);
+                    $('<span/>').text(" → ").appendTo(row);
+                    $('<input/>', {type: "text", placeholder: "column name", class: "column-target"})
+                        .css({width: "30%", marginLeft: "5px", marginRight: "5px"})
+                        .val(data.target || "")
+                        .appendTo(row);
+                    const typeSelect = $('<select/>', {class: "column-type"})
+                        .css({width: "20%"})
+                        .appendTo(row);
+                    ['auto', 'float', 'double', 'integer', 'long', 'decimal', 'string', 'boolean', 'timestamp', 'array', 'array_double', 'array_long', 'array_string'].forEach(function(t) {
+                        $('<option/>').val(t).text(t).appendTo(typeSelect);
+                    });
+                    typeSelect.val(data.type || "auto");
+                },
+                removable: true,
+                sortable: true
+            });
+
+            // Load existing mappings
+            if (node.symbolMappings) {
+                node.symbolMappings.forEach(function(m) {
+                    symbolList.editableList('addItem', m);
+                });
+            }
+            if (node.columnMappings) {
+                node.columnMappings.forEach(function(m) {
+                    columnList.editableList('addItem', m);
+                });
+            }
+        },
+        oneditresize: function(size) {
+            // Resize editable lists if needed
+        },
+        oneditsave: function() {
+            const node = this;
+
+            // Save symbol mappings
+            node.symbolMappings = [];
+            $("#node-input-symbol-list").editableList('items').each(function() {
+                const source = $(this).find(".symbol-source").val().trim();
+                const target = $(this).find(".symbol-target").val().trim();
+                if (source && target) {
+                    node.symbolMappings.push({source: source, target: target});
+                }
+            });
+
+            // Save column mappings
+            node.columnMappings = [];
+            $("#node-input-column-list").editableList('items').each(function() {
+                const source = $(this).find(".column-source").val().trim();
+                const target = $(this).find(".column-target").val().trim();
+                const type = $(this).find(".column-type").val();
+                if (source && target) {
+                    node.columnMappings.push({source: source, target: target, type: type});
+                }
+            });
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="questdb-mapper">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-tableName"><i class="fa fa-table"></i> Table Name</label>
+        <input type="text" id="node-input-tableName" placeholder="Leave empty to use msg.topic">
+    </div>
+    <div class="form-row">
+        <label for="node-input-timestampField"><i class="fa fa-clock-o"></i> Timestamp Field</label>
+        <input type="text" id="node-input-timestampField" placeholder="e.g. payload.timestamp">
+    </div>
+    <div class="form-row">
+        <label style="width:100%;"><i class="fa fa-bookmark"></i> Symbol Mappings (indexed tags)</label>
+        <ol id="node-input-symbol-list"></ol>
+    </div>
+    <div class="form-row">
+        <label style="width:100%;"><i class="fa fa-columns"></i> Column Mappings (values)</label>
+        <ol id="node-input-column-list"></ol>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="questdb-mapper">
+    <p>Maps message fields to QuestDB ILP structure for use with the Write node.</p>
+
+    <h3>Properties</h3>
+    <dl class="message-properties">
+        <dt>Table Name</dt>
+        <dd>Target table name. If empty, uses <code>msg.topic</code></dd>
+        <dt>Timestamp Field</dt>
+        <dd>Path to timestamp field (e.g. <code>payload.ts</code>)</dd>
+        <dt>Symbol Mappings</dt>
+        <dd>Map msg fields to QuestDB symbols (indexed string columns)</dd>
+        <dt>Column Mappings</dt>
+        <dd>Map msg fields to QuestDB columns with type conversion</dd>
+    </dl>
+
+    <h3>Column Types</h3>
+    <ul>
+        <li><b>auto</b> - Auto-detect type from value</li>
+        <li><b>float</b> - 32-bit floating point</li>
+        <li><b>double</b> - 64-bit floating point (higher precision)</li>
+        <li><b>integer</b> - 32-bit signed integer</li>
+        <li><b>long</b> - 64-bit signed integer</li>
+        <li><b>decimal</b> - Arbitrary precision decimal (stored as text)</li>
+        <li><b>string</b> - Text value</li>
+        <li><b>boolean</b> - true/false</li>
+        <li><b>timestamp</b> - Date/time value</li>
+        <li><b>array</b> - Auto-detect array element type</li>
+        <li><b>array_double</b> - Array of doubles</li>
+        <li><b>array_long</b> - Array of longs</li>
+        <li><b>array_string</b> - Array of strings</li>
+    </ul>
+
+    <h3>Field Path Syntax</h3>
+    <p>Use dot notation: <code>payload.sensor.value</code></p>
+    <p>Array access: <code>payload.readings[0]</code></p>
+
+    <h3>Output</h3>
+    <p>Produces a message ready for the QuestDB Write node:</p>
+    <pre>{
+  topic: "table_name",
+  payload: {
+    symbols: { ... },
+    columns: { ... },
+    timestamp: ...
+  }
+}</pre>
+
+    <h3>Example</h3>
+    <p>Input message:</p>
+    <pre>{
+  topic: "sensors",
+  payload: {
+    device: "sensor1",
+    temp: 23.5,
+    readings: [1.1, 2.2, 3.3],
+    ts: 1699999999000
+  }
+}</pre>
+    <p>With mappings:</p>
+    <ul>
+        <li>Symbol: <code>payload.device</code> → <code>device_id</code></li>
+        <li>Column: <code>payload.temp</code> → <code>temperature</code> (double)</li>
+        <li>Column: <code>payload.readings</code> → <code>values</code> (array_double)</li>
+        <li>Timestamp: <code>payload.ts</code></li>
+    </ul>
+    <p>Output:</p>
+    <pre>{
+  topic: "sensors",
+  payload: {
+    symbols: { device_id: "sensor1" },
+    columns: {
+      temperature: { value: 23.5, type: "double" },
+      values: { value: [1.1, 2.2, 3.3], type: "array", elementType: "double" }
+    },
+    timestamp: 1699999999000
+  }
+}</pre>
+</script>
+
+<style>
+    /* White text on flow canvas */
+    .questdb-white-text {
+        fill: #ffffff !important;
+    }
+    /* White text in palette */
+    .red-ui-palette-node[data-palette-type="questdb-mapper"] .red-ui-palette-label {
+        color: #ffffff !important;
+    }
+</style>

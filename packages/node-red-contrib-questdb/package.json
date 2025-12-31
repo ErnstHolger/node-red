@@ -1,0 +1,42 @@
+{
+  "name": "node-red-contrib-questdb",
+  "version": "0.4.1",
+  "description": "Node-RED nodes for QuestDB time-series database",
+  "author": {
+    "name": "Holger Amort"
+  },
+  "keywords": [
+    "node-red",
+    "questdb",
+    "time-series",
+    "database",
+    "ilp",
+    "influx-line-protocol"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/ErnstHolger/node-red#readme",
+  "bugs": {
+    "url": "https://github.com/ErnstHolger/node-red/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ErnstHolger/node-red.git"
+  },
+  "node-red": {
+    "version": ">=2.0.0",
+    "nodes": {
+      "questdb-write": "nodes/write.js",
+      "questdb-mapper": "nodes/mapper.js"
+    }
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "scripts": {
+    "prepublishOnly": "npm test --if-present",
+    "publish:dry": "npm publish --dry-run"
+  },
+  "dependencies": {
+    "@questdb/nodejs-client": "^3.0.0"
+  }
+}

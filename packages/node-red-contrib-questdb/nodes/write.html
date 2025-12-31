@@ -1,0 +1,289 @@
+<script type="text/javascript">
+    // Configuration node
+    RED.nodes.registerType('questdb-config',{
+        category: 'config',
+        defaults: {
+            name: {value:""},
+            protocol: {value:"http"},
+            host: {value:"localhost", required:true},
+            port: {value:9000, required:true, validate:RED.validators.number()},
+            tlsVerify: {value:true},
+            tlsCa: {value:""},
+            autoFlush: {value:true},
+            autoFlushRows: {value:75000, validate:RED.validators.number()},
+            autoFlushInterval: {value:1000, validate:RED.validators.number()},
+            requestTimeout: {value:10000, validate:RED.validators.number()},
+            retryTimeout: {value:10000, validate:RED.validators.number()},
+            initBufSize: {value:65536, validate:RED.validators.number()},
+            maxBufSize: {value:104857600, validate:RED.validators.number()},
+            useAuth: {value:false},
+            authType: {value:"basic"}
+        },
+        credentials: {
+            username: {type:"text"},
+            password: {type:"password"},
+            token: {type:"password"}
+        },
+        label: function() {
+            return this.name || `${this.host}:${this.port}`;
+        },
+        oneditprepare: function() {
+            var tabs = RED.tabs.create({
+                id: "questdb-config-tabs",
+                onchange: function(tab) {
+                    $("#questdb-config-tabs-content").children().hide();
+                    $("#" + tab.id).show();
+                }
+            });
+            tabs.addTab({
+                id: "questdb-tab-connection",
+                label: "Connection"
+            });
+            tabs.addTab({
+                id: "questdb-tab-security",
+                label: "Security"
+            });
+            tabs.addTab({
+                id: "questdb-tab-advanced",
+                label: "Advanced"
+            });
+
+            // Show/hide TLS options based on protocol
+            $("#node-config-input-protocol").on("change", function() {
+                var proto = $(this).val();
+                if (proto === "https" || proto === "tcps") {
+                    $(".tls-row").show();
+                } else {
+                    $(".tls-row").hide();
+                }
+                // Update default port
+                if (proto === "tcp" || proto === "tcps") {
+                    if ($("#node-config-input-port").val() === "9000") {
+                        $("#node-config-input-port").val("9009");
+                    }
+                } else {
+                    if ($("#node-config-input-port").val() === "9009") {
+                        $("#node-config-input-port").val("9000");
+                    }
+                }
+            });
+            $("#node-config-input-protocol").trigger("change");
+
+            // Show/hide auth options
+            $("#node-config-input-useAuth").on("change", function() {
+                if ($(this).is(":checked")) {
+                    $(".auth-type-row").show();
+                    $("#node-config-input-authType").trigger("change");
+                } else {
+                    $(".auth-type-row").hide();
+                    $(".auth-row").hide();
+                }
+            });
+            $("#node-config-input-useAuth").trigger("change");
+
+            // Show/hide auth fields based on auth type
+            $("#node-config-input-authType").on("change", function() {
+                var authType = $(this).val();
+                if (authType === "basic") {
+                    $(".basic-auth-row").show();
+                    $(".token-auth-row").hide();
+                } else {
+                    $(".basic-auth-row").hide();
+                    $(".token-auth-row").show();
+                }
+            });
+            $("#node-config-input-authType").trigger("change");
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="questdb-config">
+    <div class="form-row">
+        <ul style="min-width: 450px; margin-bottom: 20px;" id="questdb-config-tabs"></ul>
+    </div>
+    <div id="questdb-config-tabs-content">
+        <div id="questdb-tab-connection" style="display:block;">
+            <div class="form-row">
+                <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+                <input type="text" id="node-config-input-name" placeholder="QuestDB Server">
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-protocol"><i class="fa fa-exchange"></i> Protocol</label>
+                <select id="node-config-input-protocol" style="width:70%;">
+                    <option value="http">HTTP</option>
+                    <option value="https">HTTPS (TLS)</option>
+                    <option value="tcp">TCP</option>
+                    <option value="tcps">TCPS (TLS)</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-host"><i class="fa fa-server"></i> Host</label>
+                <input type="text" id="node-config-input-host" placeholder="localhost or IP address">
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-port"><i class="fa fa-plug"></i> Port</label>
+                <input type="text" id="node-config-input-port" placeholder="9000">
+            </div>
+            <div class="form-row tls-row">
+                <label for="node-config-input-tlsVerify"><i class="fa fa-certificate"></i> Verify TLS</label>
+                <input type="checkbox" id="node-config-input-tlsVerify" style="display:inline-block; width:auto; vertical-align:baseline;" checked>
+                <span style="margin-left:8px;">Verify server certificate</span>
+            </div>
+            <div class="form-row tls-row">
+                <label for="node-config-input-tlsCa"><i class="fa fa-file-text-o"></i> CA Cert Path</label>
+                <input type="text" id="node-config-input-tlsCa" placeholder="Path to CA certificate (PEM)">
+            </div>
+        </div>
+        <div id="questdb-tab-security" style="display:none;">
+            <div class="form-row">
+                <label for="node-config-input-useAuth"><i class="fa fa-lock"></i> Enable Auth</label>
+                <input type="checkbox" id="node-config-input-useAuth" style="display:inline-block; width:auto; vertical-align:baseline;">
+                <span style="margin-left:8px;">Enable authentication</span>
+            </div>
+            <div class="form-row auth-type-row">
+                <label for="node-config-input-authType"><i class="fa fa-id-card"></i> Auth Type</label>
+                <select id="node-config-input-authType" style="width:70%;">
+                    <option value="basic">Username / Password</option>
+                    <option value="token">Bearer Token</option>
+                </select>
+            </div>
+            <div class="form-row auth-row basic-auth-row">
+                <label for="node-config-input-username"><i class="fa fa-user"></i> Username</label>
+                <input type="text" id="node-config-input-username" placeholder="Username">
+            </div>
+            <div class="form-row auth-row basic-auth-row">
+                <label for="node-config-input-password"><i class="fa fa-key"></i> Password</label>
+                <input type="password" id="node-config-input-password" placeholder="Password">
+            </div>
+            <div class="form-row auth-row token-auth-row">
+                <label for="node-config-input-token"><i class="fa fa-ticket"></i> Token</label>
+                <input type="password" id="node-config-input-token" placeholder="Bearer token">
+            </div>
+        </div>
+        <div id="questdb-tab-advanced" style="display:none;">
+            <div class="form-row">
+                <label for="node-config-input-autoFlush"><i class="fa fa-refresh"></i> Auto Flush</label>
+                <input type="checkbox" id="node-config-input-autoFlush" style="display:inline-block; width:auto; vertical-align:baseline;" checked>
+                <span style="margin-left:8px;">Enable automatic flushing</span>
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-autoFlushRows"><i class="fa fa-bars"></i> Flush Rows</label>
+                <input type="text" id="node-config-input-autoFlushRows" placeholder="75000">
+                <span style="margin-left:8px; font-size:0.9em; color:#888;">Rows before auto-flush</span>
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-autoFlushInterval"><i class="fa fa-clock-o"></i> Flush Interval</label>
+                <input type="text" id="node-config-input-autoFlushInterval" placeholder="1000">
+                <span style="margin-left:8px; font-size:0.9em; color:#888;">ms</span>
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-requestTimeout"><i class="fa fa-hourglass"></i> Request Timeout</label>
+                <input type="text" id="node-config-input-requestTimeout" placeholder="10000">
+                <span style="margin-left:8px; font-size:0.9em; color:#888;">ms</span>
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-retryTimeout"><i class="fa fa-repeat"></i> Retry Timeout</label>
+                <input type="text" id="node-config-input-retryTimeout" placeholder="10000">
+                <span style="margin-left:8px; font-size:0.9em; color:#888;">ms</span>
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-initBufSize"><i class="fa fa-database"></i> Init Buffer</label>
+                <input type="text" id="node-config-input-initBufSize" placeholder="65536">
+                <span style="margin-left:8px; font-size:0.9em; color:#888;">bytes (64 KiB)</span>
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-maxBufSize"><i class="fa fa-database"></i> Max Buffer</label>
+                <input type="text" id="node-config-input-maxBufSize" placeholder="104857600">
+                <span style="margin-left:8px; font-size:0.9em; color:#888;">bytes (100 MiB)</span>
+            </div>
+        </div>
+    </div>
+</script>
+
+<script type="text/javascript">
+    // Main QuestDB node
+    RED.nodes.registerType('questdb',{
+        category: 'questdb',
+        color: '#a23154',
+        defaults: {
+            name: {value:""},
+            questdb: {value:"", type:"questdb-config", required:true},
+            autoFlush: {value:true},
+            flushInterval: {value:1000, validate:RED.validators.number()}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "font-awesome/fa-database",
+        label: function() {
+            return this.name || "Write";
+        },
+        paletteLabel: "Write",
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " questdb-white-text";
+        }
+    });
+</script>
+
+<style>
+    /* White text on flow canvas */
+    .questdb-white-text {
+        fill: #ffffff !important;
+    }
+    /* White text in palette */
+    .red-ui-palette-node[data-palette-type="questdb"] .red-ui-palette-label {
+        color: #ffffff !important;
+    }
+</style>
+
+<script type="text/html" data-template-name="questdb">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-questdb"><i class="fa fa-server"></i> Server</label>
+        <input type="text" id="node-input-questdb" placeholder="QuestDB Server">
+    </div>
+    <div class="form-row">
+        <label for="node-input-autoFlush"><i class="fa fa-refresh"></i> Auto Flush</label>
+        <input type="checkbox" id="node-input-autoFlush" style="display:inline-block; width:auto; vertical-align:baseline;">
+    </div>
+    <div class="form-row">
+        <label for="node-input-flushInterval"><i class="fa fa-clock-o"></i> Flush Interval (ms)</label>
+        <input type="text" id="node-input-flushInterval" placeholder="1000">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="questdb">
+    <p>Writes data to QuestDB using ILP protocol.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>topic <span class="property-type">string</span></dt>
+        <dd>Table name to write to (required)</dd>
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>Data to write:
+            <ul>
+                <li><code>symbols</code> - Tag columns (indexed)</li>
+                <li><code>columns</code> - Value columns</li>
+                <li><code>timestamp</code> - Optional (Date, number, or string)</li>
+            </ul>
+        </dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd><code>{ success: true/false, table: "name" }</code></dd>
+    </dl>
+
+    <h3>Example</h3>
+    <pre>{
+  topic: "history_float",
+  payload: {
+    symbols: { tag_name: "temp1" },
+    columns: { value: 23.5 },
+    timestamp: new Date()
+  }
+}</pre>
+</script>
