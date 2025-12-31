@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-questdb",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Node-RED nodes for QuestDB time-series database",
   "author": {
     "name": "Holger Amort"
@@ -30,13 +30,13 @@
     }
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "prepublishOnly": "npm test --if-present",
     "publish:dry": "npm publish --dry-run"
   },
   "dependencies": {
-    "@questdb/nodejs-client": "^3.0.0"
+    "@questdb/nodejs-client": "^4.2.0"
   }
 }

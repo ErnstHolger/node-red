@@ -64,19 +64,9 @@ module.exports = function(RED) {
                                     value = { value: String(value), type: 'decimal' };
                                     break;
                                 case 'array':
-                                    // Keep array as-is, auto-detect element type
-                                    if (!Array.isArray(value)) {
-                                        value = [value]; // wrap single value in array
-                                    }
-                                    break;
                                 case 'array_double':
-                                    value = { value: Array.isArray(value) ? value.map(Number) : [Number(value)], type: 'array', elementType: 'double' };
-                                    break;
-                                case 'array_long':
-                                    value = { value: Array.isArray(value) ? value.map(v => parseInt(v, 10)) : [parseInt(value, 10)], type: 'array', elementType: 'long' };
-                                    break;
-                                case 'array_string':
-                                    value = { value: Array.isArray(value) ? value.map(String) : [String(value)], type: 'array', elementType: 'string' };
+                                    // QuestDB v4.x supports double[] arrays
+                                    value = { value: Array.isArray(value) ? value.map(Number) : [Number(value)], type: 'array' };
                                     break;
                                 case 'boolean':
                                     value = Boolean(value);

@@ -62,7 +62,7 @@
                     const typeSelect = $('<select/>', {class: "column-type"})
                         .css({width: "20%"})
                         .appendTo(row);
-                    ['auto', 'float', 'double', 'integer', 'long', 'decimal', 'string', 'boolean', 'timestamp', 'array', 'array_double', 'array_long', 'array_string'].forEach(function(t) {
+                    ['auto', 'float', 'double', 'integer', 'long', 'decimal', 'string', 'boolean', 'timestamp', 'array'].forEach(function(t) {
                         $('<option/>').val(t).text(t).appendTo(typeSelect);
                     });
                     typeSelect.val(data.type || "auto");
@@ -158,14 +158,11 @@
         <li><b>double</b> - 64-bit floating point (higher precision)</li>
         <li><b>integer</b> - 32-bit signed integer</li>
         <li><b>long</b> - 64-bit signed integer</li>
-        <li><b>decimal</b> - Arbitrary precision decimal (stored as text)</li>
+        <li><b>decimal</b> - Arbitrary precision decimal</li>
         <li><b>string</b> - Text value</li>
         <li><b>boolean</b> - true/false</li>
         <li><b>timestamp</b> - Date/time value</li>
-        <li><b>array</b> - Auto-detect array element type</li>
-        <li><b>array_double</b> - Array of doubles</li>
-        <li><b>array_long</b> - Array of longs</li>
-        <li><b>array_string</b> - Array of strings</li>
+        <li><b>array</b> - Array of doubles (double[])</li>
     </ul>
 
     <h3>Field Path Syntax</h3>
@@ -198,7 +195,7 @@
     <ul>
         <li>Symbol: <code>payload.device</code> → <code>device_id</code></li>
         <li>Column: <code>payload.temp</code> → <code>temperature</code> (double)</li>
-        <li>Column: <code>payload.readings</code> → <code>values</code> (array_double)</li>
+        <li>Column: <code>payload.readings</code> → <code>values</code> (array)</li>
         <li>Timestamp: <code>payload.ts</code></li>
     </ul>
     <p>Output:</p>
@@ -208,7 +205,7 @@
     symbols: { device_id: "sensor1" },
     columns: {
       temperature: { value: 23.5, type: "double" },
-      values: { value: [1.1, 2.2, 3.3], type: "array", elementType: "double" }
+      values: { value: [1.1, 2.2, 3.3], type: "array" }
     },
     timestamp: 1699999999000
   }

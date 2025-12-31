@@ -124,7 +124,8 @@ module.exports = function(RED) {
                     const connStr = buildConnectionString(configNode);
                     RED.log.info(`[QuestDB] Connecting with: ${connStr.replace(/password=[^;]+/, 'password=***').replace(/token=[^;]+/, 'token=***')}`);
 
-                    connectionState.sender = Sender.fromConfig(connStr);
+                    // v4.x: Sender.fromConfig() is now async
+                    connectionState.sender = await Sender.fromConfig(connStr);
                     connectionState.connected = true;
                     connectionState.connecting = false;
 
@@ -299,12 +300,6 @@ module.exports = function(RED) {
                     }
 
                     if (payload.columns && typeof payload.columns === 'object') {
-                        // Check which methods are available in the sender
-                        const hasLongColumn = typeof connection.sender.longColumn === 'function';
-                        const hasDoubleColumn = typeof connection.sender.doubleColumn === 'function';
-                        const hasArrayColumn = typeof connection.sender.arrayColumn === 'function';
-                        const hasDecimalColumn = typeof connection.sender.decimalColumn === 'function';
-
                         for (const [key, value] of Object.entries(payload.columns)) {
                             if (value === null || value === undefined) continue;
 
@@ -316,43 +311,22 @@ module.exports = function(RED) {
                                 if (colType === 'int' || colType === 'integer') {
                                     connection.sender.intColumn(key, Math.trunc(colValue));
                                 } else if (colType === 'long') {
-                                    if (hasLongColumn) {
-                                        connection.sender.longColumn(key, BigInt(Math.trunc(colValue)));
-                                    } else {
-                                        // Fallback: use intColumn for smaller values, floatColumn for larger
-                                        const intVal = Math.trunc(colValue);
-                                        if (intVal >= -2147483648 && intVal <= 2147483647) {
-                                            connection.sender.intColumn(key, intVal);
-                                        } else {
-                                            connection.sender.floatColumn(key, colValue);
-                                        }
-                                    }
-                                } else if (colType === 'float') {
-                                    connection.sender.floatColumn(key, colValue);
-                                } else if (colType === 'double') {
-                                    if (hasDoubleColumn) {
-                                        connection.sender.doubleColumn(key, colValue);
-                                    } else {
-                                        connection.sender.floatColumn(key, colValue);
-                                    }
+                                    // intColumn handles 64-bit signed integers in v4.x
+                                    connection.sender.intColumn(key, Math.trunc(colValue));
+                                } else if (colType === 'float' || colType === 'double') {
+                                    // floatColumn handles 64-bit floating point in v4.x
+                                    connection.sender.floatColumn(key, Number(colValue));
                                 } else if (colType === 'decimal') {
-                                    if (hasDecimalColumn) {
-                                        if (value.mantissa !== undefined && value.scale !== undefined) {
-                                            connection.sender.decimalColumn(key, BigInt(value.mantissa), value.scale);
-                                        } else {
-                                            connection.sender.decimalColumnText(key, String(colValue));
-                                        }
+                                    if (value.mantissa !== undefined && value.scale !== undefined) {
+                                        connection.sender.decimalColumn(key, BigInt(value.mantissa), value.scale);
                                     } else {
-                                        // Fallback: store as string
-                                        connection.sender.stringColumn(key, String(colValue));
+                                        connection.sender.decimalColumnText(key, String(colValue));
                                     }
                                 } else if (colType === 'array') {
-                                    if (hasArrayColumn && Array.isArray(colValue)) {
-                                        const elementType = (value.elementType || 'double').toLowerCase();
-                                        connection.sender.arrayColumn(key, elementType, colValue);
-                                    } else if (Array.isArray(colValue)) {
-                                        // Fallback: store as JSON string
-                                        connection.sender.stringColumn(key, JSON.stringify(colValue));
+                                    if (Array.isArray(colValue)) {
+                                        // Convert to numbers for double[] array
+                                        const numericArray = colValue.map(v => Number(v));
+                                        connection.sender.arrayColumn(key, numericArray);
                                     } else {
                                         node.warn(`Array column '${key}' value must be an array`);
                                     }
@@ -369,24 +343,11 @@ module.exports = function(RED) {
                                 continue;
                             }
 
-                            // Array detection (auto)
+                            // Array detection (auto) - QuestDB supports double[] arrays
                             if (Array.isArray(value)) {
-                                if (hasArrayColumn) {
-                                    // Detect element type from first non-null element
-                                    const firstElement = value.find(v => v !== null && v !== undefined);
-                                    let elementType = 'double'; // default
-                                    if (typeof firstElement === 'string') {
-                                        elementType = 'string';
-                                    } else if (typeof firstElement === 'boolean') {
-                                        elementType = 'boolean';
-                                    } else if (typeof firstElement === 'bigint') {
-                                        elementType = 'long';
-                                    }
-                                    connection.sender.arrayColumn(key, elementType, value);
-                                } else {
-                                    // Fallback: store as JSON string
-                                    connection.sender.stringColumn(key, JSON.stringify(value));
-                                }
+                                // Convert to numeric array for double[] type
+                                const numericArray = value.map(v => Number(v));
+                                connection.sender.arrayColumn(key, numericArray);
                                 continue;
                             }
 
@@ -398,11 +359,8 @@ module.exports = function(RED) {
                                 // Use floatColumn (available in all versions)
                                 connection.sender.floatColumn(key, value);
                             } else if (typeof value === 'bigint') {
-                                if (hasLongColumn) {
-                                    connection.sender.longColumn(key, value);
-                                } else {
-                                    connection.sender.floatColumn(key, Number(value));
-                                }
+                                // intColumn handles 64-bit integers in v4.x
+                                connection.sender.intColumn(key, Number(value));
                             } else if (typeof value === 'boolean') {
                                 connection.sender.booleanColumn(key, value);
                             } else if (typeof value === 'string') {
@@ -477,7 +435,7 @@ module.exports = function(RED) {
                 // Recreate sender to clear bad state
                 try {
                     const connStr = buildConnectionString(node.questdbConfig);
-                    connection.sender = Sender.fromConfig(connStr);
+                    connection.sender = await Sender.fromConfig(connStr);
                 } catch (e) {
                     connection.connected = false;
                     connection.connect();
