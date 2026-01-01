@@ -1,0 +1,11 @@
+# Test files
+test/
+test-results/
+playwright-report/
+playwright.config.js
+*.spec.js
+
+# Development
+.git/
+.gitignore
+.vscode/
