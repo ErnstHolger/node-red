@@ -85,5 +85,5 @@ module.exports = function(RED) {
         });
     }
 
-    RED.nodes.registerType("connect-omf-write", OmfWriteNode);
+    RED.nodes.registerType("connect-omf-writer", OmfWriteNode);
 };

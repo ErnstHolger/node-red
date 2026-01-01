@@ -59,7 +59,7 @@
     },
     {
         "id": "omf-write-setup",
-        "type": "connect-omf-write",
+        "type": "connect-omf-writer",
         "z": "connect-examples-tab",
         "name": "OMF Setup",
         "connect": "",
@@ -166,7 +166,7 @@
     },
     {
         "id": "omf-write-data",
-        "type": "connect-omf-write",
+        "type": "connect-omf-writer",
         "z": "connect-examples-tab",
         "name": "OMF Write Data",
         "connect": "",
@@ -240,7 +240,7 @@
     },
     {
         "id": "omf-write-continuous",
-        "type": "connect-omf-write",
+        "type": "connect-omf-writer",
         "z": "connect-examples-tab",
         "name": "OMF Write",
         "connect": "",
@@ -515,7 +515,7 @@
     },
     {
         "id": "omf-write-mqtt",
-        "type": "connect-omf-write",
+        "type": "connect-omf-writer",
         "z": "connect-examples-tab",
         "name": "OMF Write",
         "connect": "",
