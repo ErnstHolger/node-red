@@ -1,12 +1,13 @@
 {
   "name": "node-red-contrib-compression",
-  "version": "0.1.0",
-  "description": "Node-RED nodes for data compression and decompression",
+  "version": "0.1.1",
+  "description": "Node-RED nodes for data compression, caching, and visualization",
   "keywords": [
     "node-red",
     "compression",
-    "gzip",
-    "deflate"
+    "chart",
+    "visualization",
+    "cache"
   ],
   "license": "MIT",
   "repository": {
@@ -16,7 +17,9 @@
   "node-red": {
     "version": ">=2.0.0",
     "nodes": {
-      "compression": "nodes/compression.js"
+      "compression": "nodes/compression.js",
+      "cache": "nodes/cache.js",
+      "chart": "nodes/chart.js"
     }
   },
   "engines": {
@@ -24,7 +27,12 @@
   },
   "scripts": {
     "prepublishOnly": "npm test --if-present",
-    "publish:dry": "npm publish --dry-run"
+    "publish:dry": "npm publish --dry-run",
+    "test": "npx playwright test",
+    "test:ui": "npx playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
   },
   "dependencies": {}
 }

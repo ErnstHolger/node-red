@@ -1,0 +1,172 @@
+<style>
+    .questdb-white-text {
+        fill: #ffffff !important;
+    }
+    .red-ui-palette-node[data-palette-type="qdb-chart"] .red-ui-palette-label {
+        color: #ffffff !important;
+    }
+    .chart-button {
+        margin-top: 10px;
+    }
+</style>
+
+<!-- Chart Node with uPlot -->
+<script type="text/javascript">
+    RED.nodes.registerType('qdb-chart',{
+        category: 'questdb',
+        color: '#2c3e50',
+        defaults: {
+            name: {value:""},
+            chartTitle: {value:"Data Chart"},
+            maxPoints: {value:100, validate:RED.validators.number()},
+            yMin: {value:""},
+            yMax: {value:""},
+            chartHeight: {value:300, validate:RED.validators.number()},
+            chartWidth: {value:600, validate:RED.validators.number()},
+            updateInterval: {value:100, validate:RED.validators.number()},
+            alignInterval: {value:1000, validate:RED.validators.number()}
+        },
+        inputs:1,
+        outputs:0,
+        icon: "font-awesome/fa-area-chart",
+        paletteLabel: "Chart",
+        label: function() {
+            return this.name || "QDB Chart";
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " questdb-white-text";
+        },
+        align: "right",
+        button: {
+            enabled: function() {
+                return !this.changed;
+            },
+            onclick: function() {
+                const nodeId = this.id;
+                window.open('/qdb-chart/' + nodeId, 'chart_' + nodeId,
+                    'width=800,height=600,resizable=yes,scrollbars=yes');
+            }
+        },
+        oneditprepare: function() {
+            // Add preview button in edit dialog
+            const previewBtn = $('<button type="button" class="red-ui-button chart-button">')
+                .text('Open Chart Preview')
+                .click(() => {
+                    const nodeId = this.id;
+                    window.open('/qdb-chart/' + nodeId, 'chart_' + nodeId, 
+                        'width=800,height=600,resizable=yes,scrollbars=yes');
+                });
+            $('#dialog-form').append(previewBtn);
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="qdb-chart">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-chartTitle"><i class="fa fa-header"></i> Chart Title</label>
+        <input type="text" id="node-input-chartTitle" placeholder="Data Chart">
+    </div>
+    <div class="form-row">
+        <label for="node-input-maxPoints"><i class="fa fa-database"></i> Max Points</label>
+        <input type="text" id="node-input-maxPoints" placeholder="100">
+        <div style="margin-left: 105px; font-size: 12px; color: #666;">
+            Number of data points to retain per series
+        </div>
+    </div>
+    <div class="form-row">
+        <label for="node-input-updateInterval"><i class="fa fa-clock-o"></i> Update (ms)</label>
+        <input type="text" id="node-input-updateInterval" placeholder="100">
+        <div style="margin-left: 105px; font-size: 12px; color: #666;">
+            Chart refresh interval (lower = more responsive, higher = less CPU)
+        </div>
+    </div>
+    <div class="form-row">
+        <label for="node-input-alignInterval"><i class="fa fa-align-left"></i> Align (ms)</label>
+        <input type="text" id="node-input-alignInterval" placeholder="1000">
+        <div style="margin-left: 105px; font-size: 12px; color: #666;">
+            Timestamp alignment for multi-series (match to simulator interval)
+        </div>
+    </div>
+    
+    <hr/>
+    <h4 style="margin-bottom: 10px;">Chart Appearance</h4>
+    
+    <div class="form-row">
+        <label for="node-input-chartWidth"><i class="fa fa-arrows-h"></i> Width (px)</label>
+        <input type="text" id="node-input-chartWidth" placeholder="600">
+    </div>
+    <div class="form-row">
+        <label for="node-input-chartHeight"><i class="fa fa-arrows-v"></i> Height (px)</label>
+        <input type="text" id="node-input-chartHeight" placeholder="300">
+    </div>
+    <div class="form-row">
+        <label for="node-input-yMin"><i class="fa fa-arrow-down"></i> Y Min</label>
+        <input type="text" id="node-input-yMin" placeholder="auto">
+        <div style="margin-left: 105px; font-size: 12px; color: #666;">
+            Leave empty for auto-scaling
+        </div>
+    </div>
+    <div class="form-row">
+        <label for="node-input-yMax"><i class="fa fa-arrow-up"></i> Y Max</label>
+        <input type="text" id="node-input-yMax" placeholder="auto">
+        <div style="margin-left: 105px; font-size: 12px; color: #666;">
+            Leave empty for auto-scaling
+        </div>
+    </div>
+    
+    <div class="form-tips" style="margin-top: 15px;">
+        <b>Tip:</b> After deploying, click the button on the node to open the live chart in a new window.
+    </div>
+</script>
+
+<script type="text/html" data-help-name="qdb-chart">
+    <p>Real-time chart node with uPlot visualization.</p>
+    
+    <h3>Features</h3>
+    <ul>
+        <li><b>uPlot Integration:</b> Fast, lightweight charting library</li>
+        <li><b>Multi-Series:</b> Plot multiple signals with automatic colors</li>
+        <li><b>Real-Time:</b> Live updates as data arrives</li>
+        <li><b>Configurable:</b> Adjust size, scaling, and update rate</li>
+        <li><b>Separate Window:</b> Click node button to open chart</li>
+    </ul>
+    
+    <h3>Input</h3>
+    <p><b>Multiple inputs supported:</b> Connect multiple sources (simulators, OPC UA, etc.) to plot different series on the same chart.</p>
+    <p>Accepts messages in multiple formats:</p>
+    <ul>
+        <li><b>Simple format:</b> <code>msg.topic</code> (series name), <code>msg.payload</code> (number), <code>msg.timestamp</code> (optional)</li>
+        <li><b>QuestDB format:</b> <code>msg.payload.symbols.tag_name</code> and <code>msg.payload.columns.value</code></li>
+        <li><b>Minimal:</b> Just <code>msg.payload</code> (number) uses "default" as series name</li>
+    </ul>
+    
+    <h3>Usage</h3>
+    <ol>
+        <li>Connect simulators or data sources to the chart input</li>
+        <li>Deploy the flow</li>
+        <li>Click the button on the node to open the live chart</li>
+        <li>Watch your data in real-time!</li>
+    </ol>
+    
+    <h3>Parameters</h3>
+    <ul>
+        <li><b>Max Points:</b> Number of data points to keep per series (rolling window)</li>
+        <li><b>Update Interval:</b> How often to refresh the chart (ms)</li>
+        <li><b>Width/Height:</b> Chart dimensions in pixels</li>
+        <li><b>Y Min/Max:</b> Fixed Y-axis range or auto-scaling</li>
+    </ul>
+    
+    <h3>Performance Tips</h3>
+    <ul>
+        <li>For fast data (>10 Hz): Increase update interval to 200-500ms</li>
+        <li>For slow data (<1 Hz): Decrease update interval to 100ms</li>
+        <li>Limit max points to 100-200 for smooth performance</li>
+    </ul>
+    
+    <h3>Status</h3>
+    <p>Shows current values for all active series in format: <code>series1:val | series2:val</code></p>
+</script>

@@ -1,0 +1,89 @@
+<style>
+    .questdb-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="cache"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('cache',{
+        category: 'data',
+        color: '#0097A7',
+        defaults: {
+            name: {value:""},
+            contextName: {value:"cache"},
+            contextType: {value:"global"},
+            keyProperty: {value:"topic"},
+            ttl: {value:0, validate:RED.validators.number()},
+            maxSize: {value:0, validate:RED.validators.number()},
+            outputOnUpdate: {value:true}
+        },
+        inputs:1,
+        outputs:2,
+        outputLabels: ["pass-through", "cache response"],
+        icon: "font-awesome/fa-database",
+        paletteLabel: "Cache",
+        label: function() { return this.name || "Cache"; },
+        labelStyle: function() { return (this.name ? "node_label_italic" : "") + " questdb-white-text"; },
+        oneditprepare: function() {
+            var node = this;
+            $("#node-input-clearCache").on("click", function() {
+                $.post("cache/" + node.id + "/clear").done(function() {
+                    RED.notify("Cache cleared", "success");
+                }).fail(function() {
+                    RED.notify("Deploy flow first, then clear", "warning");
+                });
+            });
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="cache">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-contextName"><i class="fa fa-database"></i> Context Key</label>
+        <input type="text" id="node-input-contextName" placeholder="cache">
+    </div>
+    <div class="form-row">
+        <label for="node-input-contextType"><i class="fa fa-globe"></i> Context Type</label>
+        <select id="node-input-contextType">
+            <option value="global">Global</option>
+            <option value="flow">Flow</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-keyProperty"><i class="fa fa-key"></i> Key Property</label>
+        <input type="text" id="node-input-keyProperty" placeholder="topic">
+    </div>
+    <div class="form-row">
+        <label for="node-input-ttl"><i class="fa fa-clock-o"></i> TTL (seconds)</label>
+        <input type="text" id="node-input-ttl" placeholder="0 = no expiry">
+    </div>
+    <div class="form-row">
+        <label for="node-input-maxSize"><i class="fa fa-list"></i> Max Size</label>
+        <input type="text" id="node-input-maxSize" placeholder="0 = unlimited">
+    </div>
+    <div class="form-row">
+        <label for="node-input-outputOnUpdate"><i class="fa fa-arrow-right"></i> Output on Update</label>
+        <input type="checkbox" id="node-input-outputOnUpdate" style="width:auto">
+    </div>
+    <div class="form-row">
+        <label>&nbsp;</label>
+        <button type="button" id="node-input-clearCache" class="red-ui-button"><i class="fa fa-trash"></i> Clear Cache</button>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="cache">
+    <p>Stores the entire message object for each key in context with optional TTL and size limits.</p>
+    <h3>Key Property</h3>
+    <p>Specify which message property to use as the cache key (e.g., <code>topic</code>, <code>name</code>, <code>payload.id</code>).</p>
+    <h3>Storage</h3>
+    <p>The entire <code>msg</code> object is stored (cloned), with <code>_cacheTimestamp</code> added for TTL tracking.</p>
+    <h3>Commands</h3>
+    <ul>
+        <li><code>msg.topic = '_cache'</code> - Get all cached messages</li>
+        <li><code>msg.topic = '_get', msg.key = 'key'</code> - Get specific cached message</li>
+        <li><code>msg.topic = '_clear'</code> - Clear all</li>
+    </ul>
+</script>

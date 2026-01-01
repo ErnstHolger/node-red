@@ -1,15 +1,56 @@
+<style>
+    .questdb-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="compression"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
 <script type="text/javascript">
-    RED.nodes.registerType('compression', {
-        category: 'function',
-        color: '#a6bbcf',
+    RED.nodes.registerType('compression',{
+        category: 'data',
+        color: '#7B1FA2',
         defaults: {
-            name: { value: "" }
+            name: {value:""},
+            algorithm: {value:"deduplicate"},
+            snapshotKey: {value:"snapshot"},
+            deviation: {value:0.1, validate:RED.validators.number()},
+            minDuration: {value:0, validate:RED.validators.number()},
+            maxDuration: {value:86400, validate:RED.validators.number()},
+            timestampField: {value:"timestamp"},
+            valueField: {value:"value"}
         },
-        inputs: 1,
-        outputs: 1,
-        icon: "arrow-in.svg",
+        inputs:1,
+        outputs:2,
+        outputLabels: ["all messages", "compressed"],
+        icon: "font-awesome/fa-compress",
+        paletteLabel: "Compress",
         label: function() {
-            return this.name || "compression";
+            if (this.name) return this.name;
+            var labels = {
+                'deduplicate': 'Dedup',
+                'deduplicate+prev': 'Dedup+Prev',
+                'timedelta': 'TimeDelta',
+                'exception': 'Exception',
+                'exception+prev': 'Except+Prev',
+                'swinging-door': 'SwingDoor'
+            };
+            return labels[this.algorithm] || 'Compress';
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " questdb-white-text";
+        },
+        oneditprepare: function() {
+            $("#node-input-algorithm").change(function() {
+                var algo = $(this).val();
+                if (algo === 'timedelta') {
+                    $(".deviation-row").hide();
+                    $(".maxduration-row").hide();
+                } else {
+                    $(".deviation-row").show();
+                    $(".maxduration-row").show();
+                }
+                if (algo === 'deduplicate' || algo === 'deduplicate+prev') {
+                    $(".deviation-row").hide();
+                }
+            }).trigger('change');
         }
     });
 </script>
@@ -19,8 +60,68 @@
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
+    <div class="form-row">
+        <label for="node-input-algorithm"><i class="fa fa-cogs"></i> Algorithm</label>
+        <select id="node-input-algorithm">
+            <option value="deduplicate">Deduplicate (change of value)</option>
+            <option value="deduplicate+prev">Deduplicate + Previous</option>
+            <option value="timedelta">Time Delta (min interval)</option>
+            <option value="exception">Exception Deviation</option>
+            <option value="exception+prev">Exception + Previous</option>
+            <option value="swinging-door">Swinging Door (slope)</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-timestampField"><i class="fa fa-clock-o"></i> Timestamp Field</label>
+        <input type="text" id="node-input-timestampField" placeholder="timestamp">
+    </div>
+    <div class="form-row">
+        <label for="node-input-valueField"><i class="fa fa-line-chart"></i> Value Field</label>
+        <input type="text" id="node-input-valueField" placeholder="value">
+    </div>
+    <div class="form-row deviation-row">
+        <label for="node-input-deviation"><i class="fa fa-arrows-v"></i> Deviation</label>
+        <input type="text" id="node-input-deviation" placeholder="0.1">
+    </div>
+    <div class="form-row">
+        <label for="node-input-minDuration"><i class="fa fa-clock-o"></i> Min Duration (s)</label>
+        <input type="text" id="node-input-minDuration" placeholder="0">
+    </div>
+    <div class="form-row maxduration-row">
+        <label for="node-input-maxDuration"><i class="fa fa-clock-o"></i> Max Duration (s)</label>
+        <input type="text" id="node-input-maxDuration" placeholder="86400">
+    </div>
+    <div class="form-row">
+        <label for="node-input-snapshotKey"><i class="fa fa-database"></i> State Key</label>
+        <input type="text" id="node-input-snapshotKey" placeholder="snapshot">
+    </div>
 </script>
 
 <script type="text/html" data-help-name="compression">
-    <p>A node for compressing and decompressing data.</p>
+    <p>Unified compression node with multiple algorithms.</p>
+    <h3>Algorithms</h3>
+    <ul>
+        <li><b>Deduplicate:</b> Output only when value changes</li>
+        <li><b>Deduplicate+Prev:</b> Also outputs previous point before change</li>
+        <li><b>Time Delta:</b> Minimum time interval between outputs</li>
+        <li><b>Exception:</b> Output when value exceeds deviation threshold</li>
+        <li><b>Exception+Prev:</b> Exception with previous point preservation</li>
+        <li><b>Swinging Door:</b> Slope-based compression (PI/OSIsoft style)</li>
+    </ul>
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>value <span class="property-type">number</span></dt>
+        <dd>The value to compress (configurable field name)</dd>
+        <dt>timestamp <span class="property-type">number</span></dt>
+        <dd>Unix timestamp in ms or seconds (configurable field name)</dd>
+        <dt>topic <span class="property-type">string</span></dt>
+        <dd>Key for per-tag state tracking</dd>
+    </dl>
+    <h3>Outputs</h3>
+    <ol class="node-ports">
+        <li>All messages pass through</li>
+        <li>Compressed output with updated timestamp/value fields</li>
+    </ol>
+    <h3>Details</h3>
+    <p>The node reads from the configured timestamp and value fields. When a message passes through compression, the output message will have the timestamp and value fields updated with the compressed values.</p>
 </script>

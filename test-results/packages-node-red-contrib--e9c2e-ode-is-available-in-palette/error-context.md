@@ -1,0 +1,330 @@
+# Page snapshot
+
+```yaml
+- generic:
+  - generic [ref=e1]:
+    - generic [ref=e2]:
+      - generic [ref=e3]:
+        - img [ref=e4]
+        - text: Node-RED
+      - list [ref=e5]:
+        - listitem [ref=e6]:
+          - generic [ref=e7]:
+            - link "Deploy" [ref=e8]:
+              - /url: "#"
+              - generic [ref=e9]:
+                - img [ref=e10]
+                - text: Deploy
+            - link "" [ref=e11] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=e12]: 
+              - text: 
+            - text:      
+        - text: 
+        - listitem [ref=e13]:
+          - link "" [ref=e14] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=e15]: 
+          - text:    
+    - generic [ref=e16]:
+      - generic [ref=e17]:
+        - generic [ref=e18]:
+          - list [ref=e20]:
+            - listitem [ref=e21]:
+              - link "Flow 1" [ref=e22] [cursor=pointer]:
+                - /url: "#f6f2187d.f17ca8"
+                - text:   Flow 1
+              - generic: 
+          - link "" [ref=e24] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=e25]: 
+          - link "" [ref=e27] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=e28]: 
+          - generic [ref=e29]: 
+          - generic [ref=e30]: 
+        - img [ref=e32]:
+          - generic [ref=e38]:
+            - generic:
+              - generic: "WARNING: please check you have started this container with a volume that is mounted to /data"
+              - generic: otherwise any flow changes are lost when you redeploy or upgrade the container
+              - generic: (e.g. upgrade to a more recent node-red docker image).
+              - generic: If you are using named volumes you can ignore this warning.
+              - generic: Double click or see info side panel to learn how to start Node-RED in Docker to save your work
+        - generic [ref=e44]:
+          - generic [ref=e46]:
+            - button "" [ref=e48] [cursor=pointer]:
+              - generic [ref=e49]: 
+            - text:   
+          - generic [ref=e50]:
+            - button "" [ref=e52] [cursor=pointer]:
+              - generic [ref=e53]: 
+            - generic [ref=e55]:
+              - button "" [ref=e56] [cursor=pointer]:
+                - generic [ref=e57]: 
+              - button "" [ref=e58] [cursor=pointer]:
+                - generic [ref=e59]: 
+              - button "" [ref=e60] [cursor=pointer]:
+                - generic [ref=e61]: 
+      - generic [ref=e62]:
+        - generic [ref=e64]:
+          - generic: 
+          - textbox "filter nodes" [ref=e66]
+          - text: 
+        - generic [ref=e67]:
+          - text: 
+          - generic [ref=e68]:
+            - generic [ref=e69] [cursor=pointer]:
+              - generic [ref=e70]: 
+              - text: common
+            - generic [ref=e72]:
+              - generic [ref=e74]: inject
+              - generic [ref=e79]: debug
+              - generic [ref=e84]: complete
+              - generic [ref=e89]: catch
+              - generic [ref=e94]: status
+              - generic [ref=e99]: link in
+              - generic [ref=e104]: link call
+              - generic [ref=e110]: link out
+              - generic [ref=e115]: comment
+          - generic [ref=e118]:
+            - generic [ref=e119] [cursor=pointer]:
+              - generic [ref=e120]: 
+              - text: function
+            - generic [ref=e122]:
+              - generic [ref=e124]: function
+              - generic [ref=e130]: switch
+              - generic [ref=e136]: change
+              - generic [ref=e142]: range
+              - generic [ref=e148]: template
+              - generic [ref=e154]: delay
+              - generic [ref=e160]: trigger
+              - generic [ref=e166]: exec
+              - generic [ref=e172]: filter
+          - generic [ref=e177]:
+            - generic [ref=e178] [cursor=pointer]:
+              - generic [ref=e179]: 
+              - text: network
+            - generic [ref=e181]:
+              - generic [ref=e183]: mqtt in
+              - generic [ref=e188]: mqtt out
+              - generic [ref=e193]: http in
+              - generic [ref=e198]: http response
+              - generic [ref=e203]: http request
+              - generic [ref=e209]: websocket in
+              - generic [ref=e214]:
+                - text: websocket
+                - text: out
+              - generic [ref=e219]: tcp in
+              - generic [ref=e224]: tcp out
+              - generic [ref=e229]: tcp request
+              - generic [ref=e235]: udp in
+              - generic [ref=e240]: udp out
+          - text:  
+          - generic [ref=e244]:
+            - generic [ref=e245] [cursor=pointer]:
+              - generic [ref=e246]: 
+              - text: sequence
+            - generic [ref=e248]:
+              - generic [ref=e250]: split
+              - generic [ref=e256]: join
+              - generic [ref=e262]: sort
+              - generic [ref=e268]: batch
+          - generic [ref=e273]:
+            - generic [ref=e274] [cursor=pointer]:
+              - generic [ref=e275]: 
+              - text: parser
+            - generic [ref=e277]:
+              - generic [ref=e279]: csv
+              - generic [ref=e285]: html
+              - generic [ref=e291]: json
+              - generic [ref=e297]: xml
+              - generic [ref=e303]: yaml
+          - generic [ref=e308]:
+            - generic [ref=e309] [cursor=pointer]:
+              - generic [ref=e310]: 
+              - text: storage
+            - generic [ref=e312]:
+              - generic [ref=e314]: write file
+              - generic [ref=e320]: read file
+              - generic [ref=e326]: watch
+              - generic [ref=e331]: postgresql
+          - text:   
+          - generic [ref=e335]:
+            - generic [ref=e336] [cursor=pointer]:
+              - generic [ref=e337]: 
+              - text: kafka
+            - generic [ref=e339]:
+              - generic [ref=e341]:
+                - text: kafkajs -
+                - text: consumer
+              - generic [ref=e346]:
+                - text: kafkajs -
+                - text: producer
+          - generic [ref=e350]:
+            - generic [ref=e351] [cursor=pointer]:
+              - generic [ref=e352]: 
+              - text: opcua
+            - generic [ref=e354]:
+              - generic [ref=e356]: OpcUa - Item
+              - generic [ref=e362]:
+                - text: OpcUa -
+                - text: Client
+              - generic [ref=e368]:
+                - text: OpcUa -
+                - text: Browser
+              - generic [ref=e374]:
+                - text: OpcUa -
+                - text: Server
+              - generic [ref=e380]:
+                - text: OpcUa -
+                - text: Event
+              - generic [ref=e386]:
+                - text: OpcUa -
+                - text: Method
+              - generic [ref=e392]:
+                - text: OpcUa -
+                - text: Rights
+              - generic [ref=e398]:
+                - text: OpcUa -
+                - text: Discovery
+          - generic [ref=e403]:
+            - generic [ref=e404] [cursor=pointer]:
+              - generic [ref=e405]: 
+              - text: questdb
+            - generic [ref=e407]:
+              - generic [ref=e408]:
+                - generic [ref=e409]: Write
+                - generic [ref=e411]: 
+              - generic [ref=e414]:
+                - generic [ref=e415]: Mapper
+                - generic [ref=e417]: 
+        - generic [ref=e421]:
+          - button "" [ref=e422] [cursor=pointer]:
+            - generic [ref=e423]: 
+          - button "" [ref=e424] [cursor=pointer]:
+            - generic [ref=e425]: 
+        - text: 
+      - generic [ref=e426]:
+        - generic [ref=e427]:
+          - list [ref=e429]:
+            - listitem [ref=e430]:
+              - link " info" [ref=e431] [cursor=pointer]:
+                - /url: "#info"
+                - generic [ref=e432]: 
+                - text: info
+            - text:     
+          - generic [ref=e433]:
+            - link "" [ref=e434]:
+              - /url: "#info"
+              - generic [ref=e435]: 
+            - link "" [ref=e436] [cursor=pointer]:
+              - /url: "#help"
+              - generic [ref=e437]: 
+            - link "" [ref=e438] [cursor=pointer]:
+              - /url: "#version-control"
+              - generic [ref=e439]: 
+            - link "" [ref=e440] [cursor=pointer]:
+              - /url: "#debug"
+              - generic [ref=e441]: 
+            - text:  
+            - link "" [ref=e442] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=e443]: 
+        - generic [ref=e444]:
+          - generic [ref=e446]:
+            - generic [ref=e447]:
+              - generic [ref=e449]:
+                - generic [ref=e451]:
+                  - generic: 
+                  - textbox "Search flows" [ref=e453]
+                  - text: 
+                  - link "" [ref=e454] [cursor=pointer]:
+                    - /url: "#"
+                    - generic [ref=e455]: 
+                - text: 
+                - list [ref=e460]:
+                  - listitem [ref=e461]:
+                    - generic [ref=e462]:
+                      - generic [ref=e463] [cursor=pointer]:
+                        - generic [ref=e465]: 
+                        - generic [ref=e466]: Flows
+                      - list [ref=e469]:
+                        - listitem [ref=e470]:
+                          - generic [ref=e472] [cursor=pointer]:
+                            - text: 
+                            - generic [ref=e474]: 
+                            - generic [ref=e477]:
+                              - generic [ref=e478]: Flow 1
+                              - generic [ref=e479]:
+                                - button [ref=e480]:  
+                                - button [ref=e481]:  
+                                - button [ref=e482]:  
+                  - listitem [ref=e483]:
+                    - generic [ref=e485] [cursor=pointer]:
+                      - generic [ref=e487]: 
+                      - generic [ref=e488]: Subflows
+                  - listitem [ref=e489]:
+                    - generic [ref=e491] [cursor=pointer]:
+                      - generic [ref=e493]: 
+                      - generic [ref=e494]: Global Configuration Nodes
+              - generic [ref=e496]:
+                - generic [ref=e497]:
+                  - generic [ref=e502]: Flow 1
+                  - button "" [ref=e503] [cursor=pointer]:
+                    - generic [ref=e504]: 
+                  - text: 
+                  - button "" [ref=e505] [cursor=pointer]:
+                    - generic [ref=e506]: 
+                - table [ref=e508]:
+                  - rowgroup [ref=e509]:
+                    - row "Flow \"f6f2187d.f17ca8\"" [ref=e510]:
+                      - cell "Flow" [ref=e511]
+                      - cell "\"f6f2187d.f17ca8\"" [ref=e512]:
+                        - generic [ref=e514]:
+                          - generic: 
+                          - generic [ref=e515]: "\"f6f2187d.f17ca8\""
+            - generic [ref=e517]:
+              - generic [ref=e518]:
+                - generic [ref=e519]: ctrl
+                - generic [ref=e520]: click
+                - text: in the workspace to open the quick-add dialog
+              - generic [ref=e521]:
+                - link "" [ref=e522] [cursor=pointer]:
+                  - /url: "#"
+                  - generic [ref=e523]: 
+                - link "" [ref=e524] [cursor=pointer]:
+                  - /url: "#"
+                  - generic [ref=e525]: 
+          - text:                                                            
+        - generic [ref=e526]:   
+      - generic [ref=e527]: 
+    - text:  
+    - generic [ref=e528]: Mapper
+    - generic: Double click or see info side panel to learn how to start Node-RED in Docker to save your work
+  - dialog [ref=e529]:
+    - generic [ref=e535]:
+      - generic [ref=e536]:
+        - generic [ref=e537]:
+          - generic [ref=e538]: 
+          - generic [ref=e539]: 
+          - generic [ref=e540]: 
+        - separator [ref=e541]
+      - generic [ref=e542]:
+        - paragraph [ref=e543]: Hello! We have introduced 'projects' to Node-RED.
+        - paragraph [ref=e544]: This is a new way for you to manage your flow files and includes version control of your flows.
+        - paragraph [ref=e545]: To get started you can create your first project or clone an existing project from a git repository.
+        - paragraph [ref=e546]: If you are not sure, you can skip this for now. You will still be able to create your first project from the 'Projects' menu at any time.
+        - generic [ref=e547]:
+          - button "  Create Project" [active] [ref=e548] [cursor=pointer]:
+            - generic [ref=e549]: 
+            - generic [ref=e550]: 
+            - text: Create Project
+          - button "  Clone Repository" [ref=e551] [cursor=pointer]:
+            - generic [ref=e552]: 
+            - generic [ref=e553]: 
+            - text: Clone Repository
+    - generic [ref=e555]:
+      - button "Open existing project" [ref=e556] [cursor=pointer]
+      - button "Not right now" [ref=e557] [cursor=pointer]
+```

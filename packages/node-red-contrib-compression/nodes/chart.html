@@ -1,0 +1,217 @@
+<style>
+    .chart-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="chart"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('chart', {
+        category: 'data',
+        color: '#4CAF50',
+        defaults: {
+            name: { value: "" },
+            title: { value: "Compression Chart" },
+            maxPoints: { value: 100, validate: RED.validators.number() },
+            timestampField: { value: "timestamp" },
+            valueField: { value: "value" },
+            seriesField: { value: "topic" }
+        },
+        inputs: 1,
+        outputs: 0,
+        icon: "font-awesome/fa-line-chart",
+        paletteLabel: "Chart",
+        label: function() {
+            return this.name || this.title || "Chart";
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " chart-white-text";
+        },
+        oneditprepare: function() {
+            var node = this;
+            var chartInstance = null;
+            var container = document.getElementById('chart-preview-container');
+
+            // Create canvas with unique ID
+            var canvas = document.createElement('canvas');
+            canvas.id = 'chart-canvas-' + node.id;
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            container.innerHTML = '';
+            container.appendChild(canvas);
+
+            // Setup clear button
+            $('#chart-clear-btn').on('click', function() {
+                $.post('chart/' + node.id + '/clear', function(data) {
+                    if (chartInstance) {
+                        chartInstance.data.datasets = [];
+                        chartInstance.update('none');
+                    }
+                }).fail(function() {
+                    RED.notify("Failed to clear chart", "error");
+                });
+            });
+
+            function loadScript(src) {
+                return new Promise(function(resolve, reject) {
+                    if (document.querySelector('script[src="' + src + '"]')) {
+                        resolve();
+                        return;
+                    }
+                    var script = document.createElement('script');
+                    script.src = src;
+                    script.onload = resolve;
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            }
+
+            function initChart() {
+                if (chartInstance) {
+                    chartInstance.destroy();
+                }
+
+                var ctx = document.getElementById('chart-canvas-' + node.id);
+                if (!ctx) return;
+
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: { datasets: [] },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                title: { display: true, text: 'Time' },
+                                ticks: {
+                                    callback: function(value) {
+                                        return new Date(value).toLocaleTimeString();
+                                    }
+                                }
+                            },
+                            y: { title: { display: true, text: 'Value' } }
+                        },
+                        plugins: {
+                            legend: { position: 'top' },
+                            title: { display: true, text: node.title || 'Chart' }
+                        }
+                    }
+                });
+
+                // Subscribe to chart data updates
+                RED.comms.subscribe("chart-data-" + node.id, function(topic, msg) {
+                    if (chartInstance && msg && msg.data) {
+                        updateChart(msg.data);
+                    }
+                });
+            }
+
+            function updateChart(data) {
+                if (!chartInstance) return;
+
+                var colors = ['#2196F3', '#FF5722', '#4CAF50', '#9C27B0', '#FF9800', '#00BCD4'];
+                var datasets = [];
+                var i = 0;
+                for (var series in data) {
+                    var isCompressed = series.includes('(compressed)');
+                    datasets.push({
+                        label: series,
+                        data: data[series],
+                        borderColor: colors[i % colors.length],
+                        backgroundColor: colors[i % colors.length] + '40',
+                        pointRadius: isCompressed ? 6 : 2,
+                        borderWidth: isCompressed ? 2 : 1,
+                        tension: 0.1,
+                        fill: false
+                    });
+                    i++;
+                }
+                chartInstance.data.datasets = datasets;
+                chartInstance.update('none');
+            }
+
+            // Load Chart.js and initialize
+            if (typeof Chart === 'undefined') {
+                loadScript('https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js')
+                    .then(function() {
+                        setTimeout(initChart, 100);
+                    })
+                    .catch(function(err) {
+                        container.innerHTML = '<p style="color:red">Failed to load Chart.js</p>';
+                    });
+            } else {
+                initChart();
+            }
+        },
+        oneditcancel: function() {
+            RED.comms.unsubscribe("chart-data-" + this.id);
+        },
+        oneditsave: function() {
+            RED.comms.unsubscribe("chart-data-" + this.id);
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="chart">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-title"><i class="fa fa-header"></i> Title</label>
+        <input type="text" id="node-input-title" placeholder="Compression Chart">
+    </div>
+    <div class="form-row">
+        <label for="node-input-timestampField"><i class="fa fa-clock-o"></i> Timestamp Field</label>
+        <input type="text" id="node-input-timestampField" placeholder="timestamp">
+    </div>
+    <div class="form-row">
+        <label for="node-input-valueField"><i class="fa fa-line-chart"></i> Value Field</label>
+        <input type="text" id="node-input-valueField" placeholder="value">
+    </div>
+    <div class="form-row">
+        <label for="node-input-seriesField"><i class="fa fa-tags"></i> Series Field</label>
+        <input type="text" id="node-input-seriesField" placeholder="topic">
+    </div>
+    <div class="form-row">
+        <label for="node-input-maxPoints"><i class="fa fa-database"></i> Max Points</label>
+        <input type="text" id="node-input-maxPoints" placeholder="100">
+    </div>
+    <div class="form-row">
+        <label><i class="fa fa-area-chart"></i> Preview</label>
+        <div id="chart-preview-container" style="height: 250px; border: 1px solid #ccc; border-radius: 4px; padding: 5px; background: #fafafa;">
+            <p style="color:#888; text-align:center; padding-top:100px;">Loading chart...</p>
+        </div>
+    </div>
+    <div class="form-row">
+        <button type="button" id="chart-clear-btn" class="red-ui-button" style="width: 100%;">
+            <i class="fa fa-trash"></i> Clear Chart Data
+        </button>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="chart">
+    <p>Displays time-series data on a chart, showing raw vs compressed data points.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>value <span class="property-type">number</span></dt>
+        <dd>The value to plot (configurable field name)</dd>
+        <dt>timestamp <span class="property-type">number</span></dt>
+        <dd>Unix timestamp in ms (configurable field name)</dd>
+        <dt>topic <span class="property-type">string</span></dt>
+        <dd>Series name for grouping data (configurable field name)</dd>
+        <dt class="optional">compressed <span class="property-type">boolean</span></dt>
+        <dd>If true, displayed as compressed data point (larger marker)</dd>
+    </dl>
+
+    <h3>Usage</h3>
+    <p>Connect both outputs from the Compression node:</p>
+    <ul>
+        <li><b>Output 1 (all messages)</b>: Shows raw data points (small markers)</li>
+        <li><b>Output 2 (compressed)</b>: Shows compressed data points (large markers)</li>
+    </ul>
+
+    <h3>Clear Data</h3>
+    <p>Use the "Clear Chart Data" button in the node config, or send <code>msg.payload = "_clear"</code>.</p>
+</script>
