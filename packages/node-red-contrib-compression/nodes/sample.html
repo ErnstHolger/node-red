@@ -1,0 +1,85 @@
+<style>
+    .sample-white-text {
+        fill: #ffffff !important;
+    }
+
+    .red-ui-palette-node[data-palette-type="sample"] .red-ui-palette-label {
+        color: #ffffff !important;
+    }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('sample', {
+        category: 'data',
+        color: '#E57373',
+        defaults: {
+            name: { value: "" },
+            stateKey: { value: "cache" },
+            outputMode: { value: "individual" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-clock-o",
+        paletteLabel: "Sample",
+        label: function () { return this.name || "Sample"; },
+        labelStyle: function () { return (this.name ? "node_label_italic" : "") + " sample-white-text"; }
+    });
+</script>
+
+<script type="text/html" data-template-name="sample">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-stateKey"><i class="fa fa-database"></i> State Key</label>
+        <input type="text" id="node-input-stateKey" placeholder="cache">
+    </div>
+    <div class="form-row">
+        <label for="node-input-outputMode"><i class="fa fa-send"></i> Output Mode</label>
+        <select id="node-input-outputMode">
+            <option value="individual">Individual Messages</option>
+            <option value="bulk">Bulk Array</option>
+        </select>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="sample">
+    <p>Samples all key-value pairs from a global state dictionary when triggered.</p>
+
+    <h3>State Dictionary Structure</h3>
+    <p>The state is a dictionary of <b>key: value</b> pairs:</p>
+    <pre>{ "t": 123456, "z": 30.5, "count": 4, ... }</pre>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>any trigger</dt>
+        <dd>Any input message triggers sampling of all state entries</dd>
+    </dl>
+
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>State Key <span class="property-type">string</span></dt>
+        <dd>Global context variable name for the state dictionary</dd>
+        <dt>Output Mode <span class="property-type">select</span></dt>
+        <dd>How to send the sampled values</dd>
+    </dl>
+
+    <h3>Output</h3>
+    <p>For each key-value pair, outputs a message:</p>
+    <dl class="message-properties">
+        <dt>topic <span class="property-type">string</span></dt>
+        <dd>The key from the state dictionary</dd>
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>The value from the state dictionary</dd>
+        <dt>_sampledAt <span class="property-type">number</span></dt>
+        <dd>Timestamp when the sample was taken</dd>
+    </dl>
+
+    <h3>Output Modes</h3>
+    <p><b>Individual:</b> Sends one message per key-value pair</p>
+    <p><b>Bulk:</b> Single message with array of all messages in <code>msg.payload</code></p>
+
+    <h3>Commands</h3>
+    <p>Send <code>msg.topic = "_status"</code> to get state info without sampling</p>
+</script>

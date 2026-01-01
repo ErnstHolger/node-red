@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm view:*)"
+      "Bash(npm view:*)",
+      "Skill(publish-npm)",
+      "Skill(publish-npm:*)",
+      "Bash(npm publish:*)"
     ]
   }
 }

@@ -41,7 +41,7 @@
     "math-intrinsics": "^1.1.0",
     "mime-db": "^1.52.0",
     "mime-types": "^2.1.35",
-    "node-red-contrib-compression": "^0.1.0",
+    "node-red-contrib-compression": "^0.1.1",
     "node-red-contrib-connect": "^0.1.1",
     "node-red-contrib-questdb": "^0.5.1",
     "proxy-from-env": "^1.1.0",
