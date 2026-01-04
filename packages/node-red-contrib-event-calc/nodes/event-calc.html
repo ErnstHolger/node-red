@@ -1,0 +1,307 @@
+<script type="text/javascript">
+    RED.nodes.registerType('event-calc', {
+        category: 'event calc',
+        color: '#87CEEB',
+        defaults: {
+            name: { value: "" },
+            cache: { value: "", type: "event-cache", required: true },
+            inputMappings: { value: [] },
+            expression: { value: "" },
+            triggerOn: { value: "any" },
+            outputTopic: { value: "calc/result" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-calculator",
+        label: function() {
+            return this.name || this.expression || "event calc";
+        },
+        paletteLabel: "event calc",
+        oneditprepare: function() {
+            const node = this;
+            let cachedTopics = [];
+
+            // Fetch topics from cache for autocomplete
+            function fetchTopics() {
+                const cacheId = $("#node-input-cache").val();
+                if (cacheId) {
+                    $.getJSON("event-cache/" + cacheId + "/topics", function(topics) {
+                        cachedTopics = topics || [];
+                        // Update existing autocomplete instances
+                        $(".input-pattern").each(function() {
+                            $(this).autocomplete("option", "source", cachedTopics);
+                        });
+                    });
+                }
+            }
+
+            // Refresh topics when cache selection changes
+            $("#node-input-cache").on("change", fetchTopics);
+
+            // Initial fetch
+            setTimeout(fetchTopics, 100);
+
+            // Function picker - insert selected function at cursor
+            $("#node-function-picker").on("change", function() {
+                const func = $(this).val();
+                if (func) {
+                    const exprInput = document.getElementById("node-input-expression");
+                    const start = exprInput.selectionStart;
+                    const end = exprInput.selectionEnd;
+                    const text = exprInput.value;
+
+                    // Insert function at cursor position
+                    exprInput.value = text.substring(0, start) + func + text.substring(end);
+
+                    // Position cursor inside the first parenthesis
+                    const parenPos = func.indexOf('(');
+                    if (parenPos !== -1) {
+                        exprInput.selectionStart = exprInput.selectionEnd = start + parenPos + 1;
+                    } else {
+                        exprInput.selectionStart = exprInput.selectionEnd = start + func.length;
+                    }
+                    exprInput.focus();
+
+                    // Reset dropdown
+                    $(this).val("");
+                }
+            });
+
+            // Input mappings editable list
+            const inputList = $("#node-input-inputMappings-list").css({
+                'min-height': '150px',
+                'min-width': '450px'
+            }).editableList({
+                addItem: function(container, i, data) {
+                    const row = $('<div/>', { style: "display:flex; align-items:center; gap:5px;" }).appendTo(container);
+
+                    $('<input/>', {
+                        type: "text",
+                        placeholder: "var (e.g. 'a')",
+                        class: "input-name"
+                    })
+                    .css({ width: "25%", flex: "0 0 auto" })
+                    .val(data.name || "")
+                    .appendTo(row);
+
+                    $('<span/>', { style: "flex: 0 0 auto;" }).text(" = ").appendTo(row);
+
+                    const patternInput = $('<input/>', {
+                        type: "text",
+                        placeholder: "topic (type to search cached topics)",
+                        class: "input-pattern"
+                    })
+                    .css({ flex: "1 1 auto" })
+                    .val(data.pattern || "")
+                    .appendTo(row);
+
+                    // Add autocomplete to pattern input
+                    patternInput.autocomplete({
+                        source: cachedTopics,
+                        minLength: 0,
+                        delay: 0
+                    }).on("focus", function() {
+                        // Show all options on focus if empty
+                        if (!$(this).val()) {
+                            $(this).autocomplete("search", "");
+                        }
+                    });
+                },
+                removable: true,
+                sortable: true,
+                addButton: true
+            });
+
+            // Load existing inputs
+            if (node.inputMappings && node.inputMappings.length > 0) {
+                node.inputMappings.forEach(function(input) {
+                    inputList.editableList('addItem', input);
+                });
+            } else {
+                // Add two default empty inputs
+                inputList.editableList('addItem', { name: 'a', pattern: '' });
+                inputList.editableList('addItem', { name: 'b', pattern: '' });
+            }
+        },
+        oneditsave: function() {
+            const node = this;
+            node.inputMappings = [];
+
+            $("#node-input-inputMappings-list").editableList('items').each(function() {
+                const name = $(this).find(".input-name").val().trim();
+                const pattern = $(this).find(".input-pattern").val().trim();
+                if (name && pattern) {
+                    node.inputMappings.push({ name: name, pattern: pattern });
+                }
+            });
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="event-calc">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-cache"><i class="fa fa-database"></i> Cache</label>
+        <input type="text" id="node-input-cache">
+    </div>
+    <div class="form-row">
+        <label style="width:100%;"><i class="fa fa-sign-in"></i> Input Variables</label>
+        <ol id="node-input-inputMappings-list"></ol>
+        <div class="form-tips">
+            Map variable names to topic patterns. Wildcards: <code>?</code> = one char, <code>*</code> = one or more chars
+        </div>
+    </div>
+    <div class="form-row">
+        <label for="node-input-expression"><i class="fa fa-code"></i> Expression</label>
+        <div style="display:flex; gap:5px;">
+            <input type="text" id="node-input-expression" placeholder="e.g. a + b, avg(a, b), round(a, 2)" style="flex:1;">
+            <select id="node-function-picker" style="width:120px;">
+                <option value="">+ Function</option>
+                <optgroup label="Math">
+                    <option value="min(, )">min(a, b)</option>
+                    <option value="max(, )">max(a, b)</option>
+                    <option value="abs()">abs(x)</option>
+                    <option value="sqrt()">sqrt(x)</option>
+                    <option value="pow(, )">pow(base, exp)</option>
+                    <option value="log()">log(x)</option>
+                    <option value="log10()">log10(x)</option>
+                    <option value="floor()">floor(x)</option>
+                    <option value="ceil()">ceil(x)</option>
+                    <option value="sin()">sin(x)</option>
+                    <option value="cos()">cos(x)</option>
+                    <option value="PI">PI</option>
+                </optgroup>
+                <optgroup label="Aggregation">
+                    <option value="sum(, )">sum(a, b, ...)</option>
+                    <option value="avg(, )">avg(a, b, ...)</option>
+                    <option value="count(, )">count(a, b, ...)</option>
+                </optgroup>
+                <optgroup label="Utility">
+                    <option value="round(, 2)">round(val, dec)</option>
+                    <option value="clamp(, 0, 100)">clamp(val, min, max)</option>
+                    <option value="map(, 0, 100, 0, 1)">map(val, in1, in2, out1, out2)</option>
+                    <option value="lerp(, , 0.5)">lerp(a, b, t)</option>
+                    <option value="ifelse( > , '', '')">ifelse(cond, true, false)</option>
+                    <option value="between(, , )">between(val, min, max)</option>
+                    <option value="delta(, )">delta(curr, prev)</option>
+                    <option value="pctChange(, )">pctChange(curr, prev)</option>
+                </optgroup>
+            </select>
+        </div>
+        <div class="form-tips">
+            JavaScript expression. Select a function to insert it at cursor position.
+        </div>
+    </div>
+    <div class="form-row">
+        <label for="node-input-triggerOn"><i class="fa fa-bolt"></i> Trigger</label>
+        <select id="node-input-triggerOn" style="width:70%;">
+            <option value="any">Any input updates</option>
+            <option value="all">Only when all inputs have values</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-outputTopic"><i class="fa fa-bookmark"></i> Output Topic</label>
+        <input type="text" id="node-input-outputTopic" placeholder="calc/result">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="event-calc">
+    <p>Subscribes to multiple topics and evaluates an expression when values update.</p>
+
+    <h3>Properties</h3>
+    <dl class="message-properties">
+        <dt>Input Variables</dt>
+        <dd>Map variable names to topic patterns. Each variable receives the latest value from matching topics.</dd>
+        <dt>Expression</dt>
+        <dd>JavaScript expression using the variable names, e.g. <code>a + b</code>, <code>Math.max(a, b)</code>, <code>(a - b) / a * 100</code></dd>
+        <dt>Trigger</dt>
+        <dd>
+            <ul>
+                <li><b>Any input updates</b>: Recalculate whenever any subscribed topic updates</li>
+                <li><b>Only when all inputs have values</b>: Wait until all inputs have received at least one value</li>
+            </ul>
+        </dd>
+        <dt>Output Topic</dt>
+        <dd>Topic to set on output messages</dd>
+    </dl>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt class="optional">expression <span class="property-type">string</span></dt>
+        <dd>Dynamically update the expression</dd>
+        <dt class="optional">payload/topic = "recalc"</dt>
+        <dd>Force recalculation with current values</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>The result of the expression</dd>
+        <dt>topic <span class="property-type">string</span></dt>
+        <dd>The configured output topic</dd>
+        <dt>inputs <span class="property-type">object</span></dt>
+        <dd>Details of all input values used in the calculation</dd>
+        <dt>expression <span class="property-type">string</span></dt>
+        <dd>The expression that was evaluated</dd>
+        <dt>trigger <span class="property-type">string</span></dt>
+        <dd>The topic that triggered this calculation</dd>
+    </dl>
+
+    <h3>Built-in Functions</h3>
+    <p>The following functions are available in expressions:</p>
+
+    <h4>Math</h4>
+    <ul>
+        <li><code>min(a, b, ...)</code> - Minimum value</li>
+        <li><code>max(a, b, ...)</code> - Maximum value</li>
+        <li><code>abs(x)</code> - Absolute value</li>
+        <li><code>sqrt(x)</code> - Square root</li>
+        <li><code>pow(base, exp)</code> - Power</li>
+        <li><code>log(x)</code>, <code>log10(x)</code> - Logarithms</li>
+        <li><code>exp(x)</code> - e^x</li>
+        <li><code>floor(x)</code>, <code>ceil(x)</code> - Rounding</li>
+        <li><code>sin(x)</code>, <code>cos(x)</code>, <code>tan(x)</code> - Trigonometry</li>
+        <li><code>PI</code>, <code>E</code> - Constants</li>
+    </ul>
+
+    <h4>Aggregation</h4>
+    <ul>
+        <li><code>sum(a, b, ...)</code> - Sum of values</li>
+        <li><code>avg(a, b, ...)</code> - Average of values</li>
+        <li><code>count(a, b, ...)</code> - Count of values</li>
+    </ul>
+
+    <h4>Utility</h4>
+    <ul>
+        <li><code>round(value, decimals)</code> - Round to N decimals</li>
+        <li><code>clamp(value, min, max)</code> - Constrain to range</li>
+        <li><code>map(value, inMin, inMax, outMin, outMax)</code> - Scale value</li>
+        <li><code>lerp(a, b, t)</code> - Linear interpolation</li>
+        <li><code>ifelse(cond, trueVal, falseVal)</code> - Conditional</li>
+        <li><code>between(value, min, max)</code> - Range check</li>
+        <li><code>delta(current, previous)</code> - Difference</li>
+        <li><code>pctChange(current, previous)</code> - Percentage change</li>
+    </ul>
+
+    <h3>Expression Examples</h3>
+    <ul>
+        <li><code>a + b</code> - Sum of two values</li>
+        <li><code>avg(a, b)</code> - Average of two values</li>
+        <li><code>max(a, b, c)</code> - Maximum of three values</li>
+        <li><code>sqrt(a * a + b * b)</code> - Pythagorean calculation</li>
+        <li><code>round(a, 2)</code> - Round to 2 decimals</li>
+        <li><code>clamp(a, 0, 100)</code> - Constrain to 0-100</li>
+        <li><code>map(a, 0, 1023, 0, 100)</code> - Scale ADC to percentage</li>
+        <li><code>ifelse(a > b, 'high', 'low')</code> - Conditional</li>
+        <li><code>pctChange(a, b)</code> - Percent change from b to a</li>
+    </ul>
+
+    <h3>Wildcard Examples</h3>
+    <ul>
+        <li><code>sensor?</code> - matches sensor1, sensorA (exactly one char)</li>
+        <li><code>sensors/*</code> - matches sensors/temp, sensors/room1/temp</li>
+    </ul>
+</script>

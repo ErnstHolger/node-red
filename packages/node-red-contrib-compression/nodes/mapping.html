@@ -1,0 +1,130 @@
+<style>
+    .questdb-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="mapping"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('mapping',{
+        category: 'compression',
+        color: '#a23154',
+        defaults: {
+            name: {value:""},
+            tableName: {value:"Mapping"},
+            contextName: {value:"mapping"},
+            contextType: {value:"global"}
+        },
+        inputs:1,
+        outputs:3,
+        outputLabels: ["id", "name", "object"],
+        icon: "font-awesome/fa-table",
+        paletteLabel: "Mapping",
+        label: function() {
+            return this.name || "Mapping";
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " questdb-white-text";
+        },
+        button: {
+            enabled: function() {
+                return !this.changed;
+            },
+            onclick: function() {
+                const nodeId = this.id;
+                $.post('/mapping/' + nodeId + '/send', function(data) {
+                    RED.notify('Sent ' + data.count + ' mappings', 'success');
+                }).fail(function() {
+                    RED.notify('Failed to send data', 'error');
+                });
+            }
+        },
+        oneditprepare: function() {
+            const nodeId = this.id;
+            const editorBtn = $('<button type="button" class="red-ui-button" style="margin-top: 10px;">')
+                .text('Open Table Editor')
+                .click(() => {
+                    window.open('/mapping/' + nodeId, 'table_' + nodeId,
+                        'width=900,height=600,resizable=yes,scrollbars=yes');
+                });
+            $('#dialog-form').append(editorBtn);
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="mapping">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-tableName"><i class="fa fa-header"></i> Table Title</label>
+        <input type="text" id="node-input-tableName" placeholder="Mapping">
+    </div>
+    <div class="form-row">
+        <label for="node-input-contextName"><i class="fa fa-database"></i> Context Key</label>
+        <input type="text" id="node-input-contextName" placeholder="mapping">
+    </div>
+    <div class="form-row">
+        <label for="node-input-contextType"><i class="fa fa-globe"></i> Context Type</label>
+        <select id="node-input-contextType">
+            <option value="global">Global</option>
+            <option value="flow">Flow</option>
+        </select>
+    </div>
+
+    <div class="form-tips" style="margin-top: 15px;">
+        <b>Tip:</b> After deploying, click the button on the node to open the table editor in a new window.
+    </div>
+</script>
+
+<script type="text/html" data-help-name="mapping">
+    <p>Editable table for source to target mapping with popup editor.</p>
+
+    <h3>Features</h3>
+    <ul>
+        <li><b>Popup Editor:</b> Open from node edit dialog</li>
+        <li><b>Auto-Save:</b> Changes saved automatically to file</li>
+        <li><b>Node Button:</b> Click to send data to outputs</li>
+        <li><b>3 Outputs:</b> ID, Name, and full Object per mapping</li>
+        <li><b>Context Storage:</b> Mappings stored in global/flow context for lookup</li>
+    </ul>
+
+    <h3>Table Fields</h3>
+    <ul>
+        <li><b>Id:</b> Source identifier</li>
+        <li><b>Name:</b> Target/display name</li>
+        <li><b>Type:</b> Compression algorithm (None, Dedup, ExcDev, ExcDev2, Comp, Sample)</li>
+        <li><b>Deviation:</b> Threshold for compression algorithms</li>
+        <li><b>Interval:</b> Minimum interval in milliseconds</li>
+    </ul>
+
+    <h3>Input Commands</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">string</span></dt>
+        <dd><code>"get"</code> - Returns current mappings</dd>
+        <dd><code>"clear"</code> - Clears all mappings</dd>
+        <dt>payload <span class="property-type">array</span></dt>
+        <dd>Array of mappings: <code>[{id, name, type, deviation, interval}]</code></dd>
+        <dt>id + name <span class="property-type">string</span></dt>
+        <dd>Add a single mapping (optional: type, deviation, interval)</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>Output 1 - ID <span class="property-type">messages</span></dt>
+        <dd>One message per row: <code>msg.topic, msg.payload = id</code></dd>
+        <dt>Output 2 - Name <span class="property-type">messages</span></dt>
+        <dd>One message per row: <code>msg.topic, msg.payload = name</code></dd>
+        <dt>Output 3 - Object <span class="property-type">messages</span></dt>
+        <dd>One message per row: <code>msg.payload = {id, name, type, deviation, interval}</code></dd>
+    </dl>
+
+    <h3>Copy/Paste</h3>
+    <p>Table supports TSV (tab-separated) format for Excel compatibility. Copy rows from Excel and paste directly into the editor.</p>
+
+    <h3>Status</h3>
+    <ul>
+        <li><b>Blue:</b> Mappings loaded/saved</li>
+        <li><b>Green:</b> Data sent to outputs</li>
+        <li><b>Grey:</b> No mappings stored</li>
+    </ul>
+</script>

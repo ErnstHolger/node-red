@@ -1,0 +1,48 @@
+<style>
+    .questdb-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="type-router"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('type-router',{
+        category: 'compression',
+        color: '#FF9800',
+        defaults: {
+            name: {value:""}
+        },
+        inputs:1,
+        outputs:4,
+        outputLabels: ["int", "float", "bool", "string"],
+        icon: "font-awesome/fa-random",
+        paletteLabel: "Type Router",
+        label: function() { return this.name || "Type Router"; },
+        labelStyle: function() { return (this.name ? "node_label_italic" : "") + " questdb-white-text"; }
+    });
+</script>
+
+<script type="text/html" data-template-name="type-router">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="type-router">
+    <p>Routes messages to different outputs based on payload data type.</p>
+    <h3>Outputs</h3>
+    <ol class="node-ports">
+        <li><b>Int:</b> Integer values</li>
+        <li><b>Float:</b> Floating point values</li>
+        <li><b>Bool:</b> Boolean values (including "true"/"false" strings)</li>
+        <li><b>String:</b> String values</li>
+    </ol>
+    <h3>Type Detection</h3>
+    <ul>
+        <li>Boolean: <code>true</code>, <code>false</code>, or strings "true"/"false"</li>
+        <li>Integer: Whole numbers without decimal point</li>
+        <li>Float: Numbers with decimal point</li>
+        <li>String: Everything else (converted if needed)</li>
+    </ul>
+    <h3>Conversion</h3>
+    <p>String representations of numbers and booleans are automatically converted to their native types.</p>
+</script>

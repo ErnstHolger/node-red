@@ -1,0 +1,184 @@
+[
+    {
+        "id": "event-calc-example-flow",
+        "type": "tab",
+        "label": "Event Calc Example",
+        "disabled": false,
+        "info": "This flow demonstrates the event-calc nodes:\n- event-in: feeds data into the cache\n- event-topic: subscribes to topic patterns\n- event-calc: performs calculations on cached values"
+    },
+    {
+        "id": "cache1",
+        "type": "event-cache",
+        "name": "Main Cache",
+        "maxEntries": "10000",
+        "ttl": "0"
+    },
+    {
+        "id": "inject-temp1",
+        "type": "inject",
+        "z": "event-calc-example-flow",
+        "name": "Room 1 Temp",
+        "props": [
+            { "p": "topic", "vt": "str" },
+            { "p": "payload" }
+        ],
+        "topic": "sensors/room1/temp",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 130,
+        "y": 100,
+        "wires": [["random-temp1"]]
+    },
+    {
+        "id": "random-temp1",
+        "type": "function",
+        "z": "event-calc-example-flow",
+        "name": "Random 20-25",
+        "func": "msg.payload = 20 + Math.random() * 5;\nreturn msg;",
+        "outputs": 1,
+        "x": 300,
+        "y": 100,
+        "wires": [["event-in1"]]
+    },
+    {
+        "id": "inject-temp2",
+        "type": "inject",
+        "z": "event-calc-example-flow",
+        "name": "Room 2 Temp",
+        "props": [
+            { "p": "topic", "vt": "str" },
+            { "p": "payload" }
+        ],
+        "topic": "sensors/room2/temp",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 130,
+        "y": 160,
+        "wires": [["random-temp2"]]
+    },
+    {
+        "id": "random-temp2",
+        "type": "function",
+        "z": "event-calc-example-flow",
+        "name": "Random 18-23",
+        "func": "msg.payload = 18 + Math.random() * 5;\nreturn msg;",
+        "outputs": 1,
+        "x": 300,
+        "y": 160,
+        "wires": [["event-in1"]]
+    },
+    {
+        "id": "event-in1",
+        "type": "event-in",
+        "z": "event-calc-example-flow",
+        "name": "",
+        "cache": "cache1",
+        "topicField": "topic",
+        "valueField": "payload",
+        "x": 490,
+        "y": 130,
+        "wires": [[]]
+    },
+    {
+        "id": "event-topic1",
+        "type": "event-topic",
+        "z": "event-calc-example-flow",
+        "name": "All Temps",
+        "cache": "cache1",
+        "pattern": "sensors/*/temp",
+        "outputFormat": "value",
+        "outputOnStart": false,
+        "x": 490,
+        "y": 240,
+        "wires": [["debug-topic"]]
+    },
+    {
+        "id": "debug-topic",
+        "type": "debug",
+        "z": "event-calc-example-flow",
+        "name": "Topic Updates",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 690,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "event-calc1",
+        "type": "event-calc",
+        "z": "event-calc-example-flow",
+        "name": "Avg Temp",
+        "cache": "cache1",
+        "inputMappings": [
+            { "name": "a", "pattern": "sensors/room1/temp" },
+            { "name": "b", "pattern": "sensors/room2/temp" }
+        ],
+        "expression": "(a + b) / 2",
+        "triggerOn": "all",
+        "outputTopic": "calc/avg_temp",
+        "x": 490,
+        "y": 320,
+        "wires": [["debug-calc"]]
+    },
+    {
+        "id": "debug-calc",
+        "type": "debug",
+        "z": "event-calc-example-flow",
+        "name": "Calculation",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 690,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "comment1",
+        "type": "comment",
+        "z": "event-calc-example-flow",
+        "name": "1. Click inject buttons to simulate sensor readings",
+        "info": "",
+        "x": 220,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "comment2",
+        "type": "comment",
+        "z": "event-calc-example-flow",
+        "name": "2. event-topic outputs when any temp updates",
+        "info": "",
+        "x": 590,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "comment3",
+        "type": "comment",
+        "z": "event-calc-example-flow",
+        "name": "3. event-calc computes average (waits for both values)",
+        "info": "",
+        "x": 620,
+        "y": 280,
+        "wires": []
+    }
+]

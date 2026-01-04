@@ -1,0 +1,130 @@
+<script type="text/javascript">
+    RED.nodes.registerType('event-topic', {
+        category: 'event calc',
+        color: '#87CEEB',
+        defaults: {
+            name: { value: "" },
+            cache: { value: "", type: "event-cache", required: true },
+            pattern: { value: "*" },
+            outputFormat: { value: "value" },
+            outputOnStart: { value: false }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-filter",
+        label: function() {
+            return this.name || this.pattern || "event topic";
+        },
+        paletteLabel: "event topic",
+        oneditprepare: function() {
+            const node = this;
+
+            // Fetch topics from cache for autocomplete
+            function fetchTopics() {
+                const cacheId = $("#node-input-cache").val();
+                if (cacheId) {
+                    $.getJSON("event-cache/" + cacheId + "/topics", function(topics) {
+                        $("#node-input-pattern").autocomplete("option", "source", topics || []);
+                    });
+                }
+            }
+
+            // Setup autocomplete on pattern input
+            $("#node-input-pattern").autocomplete({
+                source: [],
+                minLength: 0,
+                delay: 0
+            }).on("focus", function() {
+                if (!$(this).val() || $(this).val() === "*") {
+                    $(this).autocomplete("search", "");
+                }
+            });
+
+            // Refresh topics when cache selection changes
+            $("#node-input-cache").on("change", fetchTopics);
+
+            // Initial fetch
+            setTimeout(fetchTopics, 100);
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="event-topic">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-cache"><i class="fa fa-database"></i> Cache</label>
+        <input type="text" id="node-input-cache">
+    </div>
+    <div class="form-row">
+        <label for="node-input-pattern"><i class="fa fa-bookmark"></i> Topic Pattern</label>
+        <input type="text" id="node-input-pattern" placeholder="*">
+        <div class="form-tips">
+            Wildcards: <code>?</code> = exactly one character, <code>*</code> = one or more characters.<br>
+            Examples: <code>sensor?</code> matches sensor1, <code>sensors/*</code> matches sensors/temp
+        </div>
+    </div>
+    <div class="form-row">
+        <label for="node-input-outputFormat"><i class="fa fa-sign-out"></i> Output Format</label>
+        <select id="node-input-outputFormat" style="width:70%;">
+            <option value="value">Value only (msg.payload = value)</option>
+            <option value="full">Full entry (msg.payload = {value, ts, metadata})</option>
+            <option value="all">All matching (msg.payload = {topic: value, ...})</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-outputOnStart" style="display:inline-block; width:auto; vertical-align:top;">
+        <label for="node-input-outputOnStart" style="width:auto;">Output existing cached values on deploy</label>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="event-topic">
+    <p>Subscribes to a topic pattern and outputs when matching topics update in the cache.</p>
+
+    <h3>Properties</h3>
+    <dl class="message-properties">
+        <dt>Cache</dt>
+        <dd>The event-cache config node to use</dd>
+        <dt>Topic Pattern</dt>
+        <dd>Pattern with wildcards. <code>?</code> = exactly one character, <code>*</code> = one or more characters.</dd>
+        <dt>Output Format</dt>
+        <dd>
+            <ul>
+                <li><b>Value only</b>: <code>msg.payload</code> contains just the value</li>
+                <li><b>Full entry</b>: <code>msg.payload</code> contains <code>{value, ts, metadata}</code></li>
+                <li><b>All matching</b>: <code>msg.payload</code> contains all cached values matching the pattern</li>
+            </ul>
+        </dd>
+        <dt>Output on deploy</dt>
+        <dd>If checked, outputs all currently cached values matching the pattern when the flow starts</dd>
+    </dl>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt class="optional">pattern <span class="property-type">string</span></dt>
+        <dd>Dynamically change the subscription pattern</dd>
+        <dt class="optional">payload/topic = "refresh"</dt>
+        <dd>Output all currently cached values matching the pattern</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>topic <span class="property-type">string</span></dt>
+        <dd>The topic that was updated</dd>
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>The value (format depends on Output Format setting)</dd>
+        <dt>timestamp <span class="property-type">number</span></dt>
+        <dd>Unix timestamp when the value was cached</dd>
+    </dl>
+
+    <h3>Wildcard Examples</h3>
+    <ul>
+        <li><code>sensor?</code> - matches sensor1, sensorA (exactly one char)</li>
+        <li><code>sensors/*</code> - matches sensors/temp, sensors/room1 (one or more chars after /)</li>
+        <li><code>*/temp</code> - matches room1/temp, sensors/temp</li>
+        <li><code>*</code> - matches any topic with one or more characters</li>
+    </ul>
+</script>

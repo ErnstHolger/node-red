@@ -1,0 +1,30 @@
+<script type="text/javascript">
+    RED.nodes.registerType('event-cache', {
+        category: 'config',
+        defaults: {
+            name: { value: "" },
+            maxEntries: { value: 10000, validate: RED.validators.number() },
+            ttl: { value: 0, validate: RED.validators.number() }
+        },
+        label: function() {
+            return this.name || "Event Cache";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="event-cache">
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-config-input-name" placeholder="Event Cache">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-maxEntries"><i class="fa fa-database"></i> Max Entries</label>
+        <input type="number" id="node-config-input-maxEntries" placeholder="10000">
+        <div class="form-tips">Maximum number of topics to cache. Oldest entries are removed when limit is reached.</div>
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-ttl"><i class="fa fa-clock-o"></i> TTL (ms)</label>
+        <input type="number" id="node-config-input-ttl" placeholder="0">
+        <div class="form-tips">Time-to-live in milliseconds. Set to 0 for no expiry.</div>
+    </div>
+</script>

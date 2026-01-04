@@ -1,0 +1,66 @@
+<script type="text/javascript">
+    RED.nodes.registerType('event-in', {
+        category: 'event calc',
+        color: '#87CEEB',
+        defaults: {
+            name: { value: "" },
+            cache: { value: "", type: "event-cache", required: true },
+            topicField: { value: "topic" },
+            valueField: { value: "payload" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-arrow-circle-right",
+        label: function() {
+            return this.name || "event in";
+        },
+        paletteLabel: "event in"
+    });
+</script>
+
+<script type="text/html" data-template-name="event-in">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-cache"><i class="fa fa-database"></i> Cache</label>
+        <input type="text" id="node-input-cache">
+    </div>
+    <div class="form-row">
+        <label for="node-input-topicField"><i class="fa fa-bookmark"></i> Topic Field</label>
+        <input type="text" id="node-input-topicField" placeholder="topic">
+        <div class="form-tips">Message property containing the topic (e.g., <code>topic</code> for <code>msg.topic</code>)</div>
+    </div>
+    <div class="form-row">
+        <label for="node-input-valueField"><i class="fa fa-cube"></i> Value Field</label>
+        <input type="text" id="node-input-valueField" placeholder="payload">
+        <div class="form-tips">Message property containing the value (e.g., <code>payload</code> for <code>msg.payload</code>)</div>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="event-in">
+    <p>Receives messages and pushes values to the event cache.</p>
+
+    <h3>Properties</h3>
+    <dl class="message-properties">
+        <dt>Cache</dt>
+        <dd>The event-cache config node to use</dd>
+        <dt>Topic Field</dt>
+        <dd>Message property containing the topic (default: <code>msg.topic</code>)</dd>
+        <dt>Value Field</dt>
+        <dd>Message property containing the value (default: <code>msg.payload</code>)</dd>
+    </dl>
+
+    <h3>Inputs</h3>
+    <p>Any message with a topic and value. The topic is used as the cache key.</p>
+
+    <h3>Outputs</h3>
+    <p>The original message is passed through unchanged, allowing this node to be inserted into existing flows.</p>
+
+    <h3>Details</h3>
+    <p>This node extracts a topic and value from incoming messages and stores them in the configured event-cache.
+    Other nodes (event-topic, event-calc) can then subscribe to these cached values.</p>
+
+    <p>Use this node to feed data from any source into the event cache system.</p>
+</script>
