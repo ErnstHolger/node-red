@@ -1,12 +1,12 @@
 <style>
     .questdb-white-text { fill: #ffffff !important; }
-    .red-ui-palette-node[data-palette-type="type-router"] .red-ui-palette-label { color: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="qdb-type-router"] .red-ui-palette-label { color: #ffffff !important; }
 </style>
 
 <script type="text/javascript">
-    RED.nodes.registerType('type-router',{
-        category: 'compression',
-        color: '#7B1FA2',
+    RED.nodes.registerType('qdb-type-router',{
+        category: 'questdb',
+        color: '#a54a7b',
         defaults: {
             name: {value:""}
         },
@@ -20,14 +20,14 @@
     });
 </script>
 
-<script type="text/html" data-template-name="type-router">
+<script type="text/html" data-template-name="qdb-type-router">
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
 </script>
 
-<script type="text/html" data-help-name="type-router">
+<script type="text/html" data-help-name="qdb-type-router">
     <p>Routes messages to different outputs based on payload data type.</p>
     <h3>Outputs</h3>
     <ol class="node-ports">

@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-event-calc",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Node-RED nodes for event caching and calculations with topic wildcard patterns",
   "author": {
     "name": "Holger Amort"

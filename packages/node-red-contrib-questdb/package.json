@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-questdb",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Node-RED nodes for QuestDB time-series database",
   "author": {
     "name": "Holger Amort"
@@ -26,7 +26,8 @@
     "version": ">=2.0.0",
     "nodes": {
       "questdb-writer": "nodes/writer.js",
-      "questdb-mapper": "nodes/mapper.js"
+      "questdb-mapper": "nodes/mapper.js",
+      "qdb-type-router": "nodes/type-router.js"
     }
   },
   "engines": {

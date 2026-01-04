@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-compression",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Node-RED nodes for data compression, caching, and visualization",
   "keywords": [
     "node-red",
@@ -30,12 +30,7 @@
     "node": ">=14.0.0"
   },
   "scripts": {
-    "publish:dry": "npm publish --dry-run",
-    "test": "npx playwright test",
-    "test:ui": "npx playwright test --ui"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.40.0"
+    "publish:dry": "npm publish --dry-run"
   },
   "dependencies": {}
 }
