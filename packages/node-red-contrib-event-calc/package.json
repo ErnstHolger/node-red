@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-event-calc",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "Node-RED nodes for event caching and calculations with topic wildcard patterns",
   "author": {
     "name": "Holger Amort"
@@ -29,7 +29,9 @@
       "event-cache": "nodes/event-cache.js",
       "event-in": "nodes/event-in.js",
       "event-topic": "nodes/event-topic.js",
-      "event-calc": "nodes/event-calc.js"
+      "event-calc": "nodes/event-calc.js",
+      "event-simulator": "nodes/event-simulator.js",
+      "event-chart": "nodes/event-chart.js"
     }
   },
   "engines": {

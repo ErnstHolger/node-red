@@ -1,12 +1,12 @@
 /**
- * event-topic - Subscription node for topic patterns
+ * event-topic - Subscription node for exact topics
  *
  * Features:
- * - Subscribes to cache using MQTT-style topic patterns
- * - Outputs when matching topics update
- * - Multiple output formats: value only, full entry, or all matching
- * - Optional output of existing values on start
- * - Dynamic pattern change via input message
+ * - Subscribes to cache for a specific topic
+ * - Outputs when the topic updates
+ * - Multiple output formats: value only or full entry
+ * - Optional output of existing value on start
+ * - Dynamic topic change via input message
  */
 module.exports = function(RED) {
     function EventTopicNode(config) {
@@ -14,7 +14,8 @@ module.exports = function(RED) {
         const node = this;
 
         node.cacheConfig = RED.nodes.getNode(config.cache);
-        node.pattern = config.pattern || '#';
+        // Support both old 'pattern' and new 'topic' config
+        node.topic = config.topic || config.pattern || '';
         node.outputFormat = config.outputFormat || 'value';
         node.outputOnStart = config.outputOnStart || false;
 
@@ -22,6 +23,11 @@ module.exports = function(RED) {
 
         if (!node.cacheConfig) {
             node.status({ fill: "red", shape: "ring", text: "no cache configured" });
+            return;
+        }
+
+        if (!node.topic) {
+            node.status({ fill: "yellow", shape: "ring", text: "no topic" });
             return;
         }
 
@@ -45,21 +51,6 @@ module.exports = function(RED) {
                             metadata: entry.metadata
                         }
                     };
-                case 'all':
-                    const all = node.cacheConfig.getMatching(node.pattern);
-                    const values = {};
-                    for (const [t, e] of all) {
-                        values[t] = e.value;
-                    }
-                    return {
-                        topic: topic,
-                        payload: values,
-                        trigger: {
-                            topic: topic,
-                            value: entry.value
-                        },
-                        timestamp: entry.ts
-                    };
                 default:
                     return {
                         topic: topic,
@@ -69,10 +60,10 @@ module.exports = function(RED) {
         }
 
         /**
-         * Subscribe to the current pattern
+         * Subscribe to the current topic
          */
         function subscribe() {
-            subscriptionId = node.cacheConfig.subscribe(node.pattern, (topic, entry) => {
+            subscriptionId = node.cacheConfig.subscribe(node.topic, (topic, entry) => {
                 const msg = buildOutputMessage(topic, entry);
                 node.send(msg);
 
@@ -84,43 +75,45 @@ module.exports = function(RED) {
 
         // Initial subscription
         subscribe();
-        node.status({ fill: "green", shape: "dot", text: node.pattern });
+        const displayTopic = node.topic.length > 20 ? node.topic.substring(0, 17) + '...' : node.topic;
+        node.status({ fill: "green", shape: "dot", text: displayTopic });
 
-        // Output existing values on start if configured
+        // Output existing value on start if configured
         if (node.outputOnStart) {
             setImmediate(() => {
-                const matching = node.cacheConfig.getMatching(node.pattern);
-                for (const [topic, entry] of matching) {
-                    const msg = buildOutputMessage(topic, entry);
+                const entry = node.cacheConfig.getValue(node.topic);
+                if (entry) {
+                    const msg = buildOutputMessage(node.topic, entry);
                     node.send(msg);
                 }
             });
         }
 
-        // Handle input messages for dynamic pattern change
+        // Handle input messages for dynamic topic change
         node.on('input', function(msg, send, done) {
             // For Node-RED 0.x compatibility
             send = send || function() { node.send.apply(node, arguments); };
             done = done || function(err) { if (err) node.error(err, msg); };
 
-            if (msg.pattern && typeof msg.pattern === 'string') {
-                // Unsubscribe from old pattern
+            if (msg.topic && typeof msg.topic === 'string' && msg.payload === 'subscribe') {
+                // Unsubscribe from old topic
                 if (subscriptionId && node.cacheConfig) {
                     node.cacheConfig.unsubscribe(subscriptionId);
                 }
 
-                // Update pattern and resubscribe
-                node.pattern = msg.pattern;
+                // Update topic and resubscribe
+                node.topic = msg.topic;
                 subscribe();
 
-                node.status({ fill: "blue", shape: "dot", text: node.pattern });
+                const dt = node.topic.length > 20 ? node.topic.substring(0, 17) + '...' : node.topic;
+                node.status({ fill: "blue", shape: "dot", text: dt });
             }
 
-            // Allow manual trigger to output all current values
-            if (msg.topic === 'refresh' || msg.payload === 'refresh') {
-                const matching = node.cacheConfig.getMatching(node.pattern);
-                for (const [topic, entry] of matching) {
-                    const outMsg = buildOutputMessage(topic, entry);
+            // Allow manual trigger to output current value
+            if (msg.payload === 'refresh') {
+                const entry = node.cacheConfig.getValue(node.topic);
+                if (entry) {
+                    const outMsg = buildOutputMessage(node.topic, entry);
                     send(outMsg);
                 }
             }

@@ -1,0 +1,76 @@
+<style>
+    .rx-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="rx-subscribe"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('rx-subscribe', {
+        category: 'reactive',
+        color: '#B7178C',
+        defaults: {
+            name: { value: "" },
+            context: { value: "", type: "rx-context", required: true },
+            streamName: { value: "default", required: true },
+            outputOnDeploy: { value: true }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "arrow-in.svg",
+        label: function() {
+            return this.name || this.streamName || "rx-subscribe";
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " rx-white-text";
+        },
+        paletteLabel: "subscribe"
+    });
+</script>
+
+<script type="text/html" data-template-name="rx-subscribe">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-context"><i class="fa fa-cog"></i> Context</label>
+        <input type="text" id="node-input-context">
+    </div>
+    <div class="form-row">
+        <label for="node-input-streamName"><i class="fa fa-bookmark"></i> Stream Name</label>
+        <input type="text" id="node-input-streamName" placeholder="default">
+    </div>
+    <div class="form-row">
+        <label for="node-input-outputOnDeploy">
+            <input type="checkbox" id="node-input-outputOnDeploy" style="width:auto; margin-left:0;">
+            Output current value on deploy
+        </label>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="rx-subscribe">
+    <p>Subscribes to a named RxJS stream and outputs values as messages.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt class="optional">streamName <span class="property-type">string</span></dt>
+        <dd>Dynamically change the subscribed stream</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Value emitted by the stream</dd>
+        <dt>topic <span class="property-type">string</span></dt>
+        <dd>The stream name</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node subscribes to a named Subject stream from the rx-context
+    and outputs a message whenever the stream emits a value.</p>
+
+    <p>If subscribing to a BehaviorSubject with "Output current value on deploy"
+    enabled, the current value will be emitted when the flow starts.</p>
+
+    <h3>Dynamic Subscription</h3>
+    <p>Send a message with <code>msg.streamName</code> to switch to a different stream.</p>
+</script>

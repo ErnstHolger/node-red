@@ -1,0 +1,53 @@
+{
+  "name": "node-red-contrib-reactive",
+  "version": "0.1.0",
+  "description": "Node-RED nodes for RxJS reactive programming - debounce, throttle, buffer, scan, and more",
+  "keywords": [
+    "node-red",
+    "rxjs",
+    "reactive",
+    "observable",
+    "debounce",
+    "throttle",
+    "buffer",
+    "stream"
+  ],
+  "author": "Holger Amort",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ErnstHolger/node-red.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ErnstHolger/node-red/issues"
+  },
+  "node-red": {
+    "version": ">=2.0.0",
+    "nodes": {
+      "rx-context": "nodes/rx-context.js",
+      "rx-subject": "nodes/rx-subject.js",
+      "rx-subscribe": "nodes/rx-subscribe.js",
+      "rx-interval": "nodes/rx-interval.js",
+      "rx-timer": "nodes/rx-timer.js",
+      "rx-map": "nodes/rx-map.js",
+      "rx-filter": "nodes/rx-filter.js",
+      "rx-scan": "nodes/rx-scan.js",
+      "rx-buffer": "nodes/rx-buffer.js",
+      "rx-debounce": "nodes/rx-debounce.js",
+      "rx-throttle": "nodes/rx-throttle.js",
+      "rx-delay": "nodes/rx-delay.js",
+      "rx-take": "nodes/rx-take.js",
+      "rx-skip": "nodes/rx-skip.js",
+      "rx-distinct": "nodes/rx-distinct.js",
+      "rx-merge": "nodes/rx-merge.js",
+      "rx-combine": "nodes/rx-combine.js",
+      "rx-window": "nodes/rx-window.js"
+    }
+  },
+  "dependencies": {
+    "rxjs": "^7.8.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

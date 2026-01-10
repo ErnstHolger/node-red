@@ -257,6 +257,15 @@ module.exports = function(RED) {
                 return;
             }
 
+            // Check if TCP transport is actually connected
+            if (connection.sender.transport && typeof connection.sender.transport.connected === 'boolean' && !connection.sender.transport.connected) {
+                connection.connected = false;
+                connection.connect();
+                node.error("TCP transport disconnected, reconnecting...", msg);
+                updateStatus();
+                return;
+            }
+
             // Validate message
             const tableName = msg.topic;
             if (!tableName) {
@@ -429,16 +438,26 @@ module.exports = function(RED) {
             } catch (err) {
                 const errMsg = err.message || String(err);
 
-                node.warn(`QuestDB write failed: ${errMsg}`);
-                node.status({fill:"yellow", shape:"ring", text:"write failed"});
-
-                // Recreate sender to clear bad state
-                try {
-                    const connStr = buildConnectionString(node.questdbConfig);
-                    connection.sender = await Sender.fromConfig(connStr);
-                } catch (e) {
+                // Check if this is a TCP transport disconnect error
+                if (errMsg.includes('not connected') || errMsg.includes('transport')) {
+                    node.warn(`QuestDB connection lost: ${errMsg}`);
+                    node.status({fill:"red", shape:"ring", text:"disconnected"});
                     connection.connected = false;
+                    connection.sender = null;
                     connection.connect();
+                } else {
+                    node.warn(`QuestDB write failed: ${errMsg}`);
+                    node.status({fill:"yellow", shape:"ring", text:"write failed"});
+
+                    // Recreate sender to clear bad state
+                    try {
+                        const connStr = buildConnectionString(node.questdbConfig);
+                        connection.sender = await Sender.fromConfig(connStr);
+                    } catch (e) {
+                        connection.connected = false;
+                        connection.sender = null;
+                        connection.connect();
+                    }
                 }
 
                 msg.payload = { success: false, error: errMsg };

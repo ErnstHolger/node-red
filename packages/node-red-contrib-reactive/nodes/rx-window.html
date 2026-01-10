@@ -1,0 +1,148 @@
+<style>
+    .rx-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="rx-window"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('rx-window', {
+        category: 'reactive',
+        color: '#B7178C',
+        defaults: {
+            name: { value: "" },
+            windowTime: { value: 5000, validate: RED.validators.number() },
+            slideTime: { value: 0, validate: RED.validators.number() },
+            aggregate: { value: "array" },
+            emitEmpty: { value: false }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-window-maximize",
+        label: function() {
+            if (this.name) return this.name;
+            const type = this.slideTime > 0 ? "slide" : "window";
+            return `${type} ${this.windowTime}ms`;
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " rx-white-text";
+        },
+        paletteLabel: "window",
+        oneditprepare: function() {
+            function updateSlideVisibility() {
+                const slideTime = parseInt($("#node-input-slideTime").val()) || 0;
+                if (slideTime > 0) {
+                    $(".slide-info").show();
+                } else {
+                    $(".slide-info").hide();
+                }
+            }
+            $("#node-input-slideTime").on("change keyup", updateSlideVisibility);
+            updateSlideVisibility();
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="rx-window">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-windowTime"><i class="fa fa-clock-o"></i> Window Time (ms)</label>
+        <input type="number" id="node-input-windowTime" min="100" value="5000">
+    </div>
+    <div class="form-row">
+        <label for="node-input-slideTime"><i class="fa fa-arrows-h"></i> Slide Time (ms)</label>
+        <input type="number" id="node-input-slideTime" min="0" value="0" placeholder="0 = tumbling window">
+    </div>
+    <div class="form-tips slide-info" style="display:none;">
+        <p>Sliding window: New window every <span id="slide-display"></span>ms, each containing last <span id="window-display"></span>ms of data.</p>
+    </div>
+    <div class="form-row">
+        <label for="node-input-aggregate"><i class="fa fa-calculator"></i> Aggregate</label>
+        <select id="node-input-aggregate">
+            <option value="array">Array (raw values)</option>
+            <option value="count">Count</option>
+            <option value="sum">Sum</option>
+            <option value="avg">Average</option>
+            <option value="min">Minimum</option>
+            <option value="max">Maximum</option>
+            <option value="first">First</option>
+            <option value="last">Last</option>
+            <option value="range">Range (max - min)</option>
+            <option value="stddev">Std Deviation</option>
+            <option value="stats">Full Statistics</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-emitEmpty">
+            <input type="checkbox" id="node-input-emitEmpty" style="width:auto; margin-left:0;">
+            Emit empty windows
+        </label>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="rx-window">
+    <p>Collects values over time windows and emits aggregated results.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">number|any</span></dt>
+        <dd>Value to collect (numbers for most aggregations)</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Aggregated result based on selected function</dd>
+        <dt>windowCount <span class="property-type">number</span></dt>
+        <dd>Sequential window number</dd>
+        <dt>windowSize <span class="property-type">number</span></dt>
+        <dd>Number of values in the window</dd>
+    </dl>
+
+    <h3>Window Types</h3>
+    <ul>
+        <li><b>Tumbling Window</b> (Slide Time = 0): Non-overlapping windows. Each value belongs to exactly one window.</li>
+        <li><b>Sliding Window</b> (Slide Time > 0): Overlapping windows. Windows slide by the slide time, each containing the last windowTime of data.</li>
+    </ul>
+
+    <h3>Aggregation Functions</h3>
+    <table>
+        <tr><th>Function</th><th>Output</th></tr>
+        <tr><td>Array</td><td>Raw array of values</td></tr>
+        <tr><td>Count</td><td>Number of values</td></tr>
+        <tr><td>Sum</td><td>Sum of values</td></tr>
+        <tr><td>Average</td><td>Mean value</td></tr>
+        <tr><td>Min/Max</td><td>Minimum/Maximum value</td></tr>
+        <tr><td>First/Last</td><td>First/Last value in window</td></tr>
+        <tr><td>Range</td><td>Max - Min</td></tr>
+        <tr><td>Std Deviation</td><td>Standard deviation</td></tr>
+        <tr><td>Full Statistics</td><td>Object with count, sum, avg, min, max, range, stddev, median</td></tr>
+    </table>
+
+    <h3>Examples</h3>
+
+    <h4>Tumbling Window (5s window, 0 slide)</h4>
+    <pre>
+Time:   0----5----10----15----20
+        |----|----|-----|-----|
+Window:   1     2     3     4
+    </pre>
+
+    <h4>Sliding Window (5s window, 1s slide)</h4>
+    <pre>
+Time:   0-1-2-3-4-5-6-7-8-9-10
+        |---------|           Window 1 (0-5s)
+          |---------|         Window 2 (1-6s)
+            |---------|       Window 3 (2-7s)
+              |---------|     Window 4 (3-8s)
+    </pre>
+
+    <h3>Use Cases</h3>
+    <ul>
+        <li>Rolling averages for sensor data</li>
+        <li>Time-based statistics (e.g., requests per minute)</li>
+        <li>Smoothing noisy data</li>
+        <li>Detecting anomalies in time windows</li>
+    </ul>
+</script>

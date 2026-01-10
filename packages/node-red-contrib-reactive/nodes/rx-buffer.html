@@ -1,0 +1,111 @@
+<style>
+    .rx-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="rx-buffer"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('rx-buffer', {
+        category: 'reactive',
+        color: '#B7178C',
+        defaults: {
+            name: { value: "" },
+            mode: { value: "count" },
+            bufferSize: { value: 5, validate: RED.validators.number() },
+            timeSpan: { value: 1000, validate: RED.validators.number() }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-bars",
+        label: function() {
+            if (this.name) return this.name;
+            if (this.mode === "time") {
+                return `buffer ${this.timeSpan}ms`;
+            }
+            return `buffer ${this.bufferSize}`;
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " rx-white-text";
+        },
+        paletteLabel: "buffer",
+        oneditprepare: function() {
+            function updateFields() {
+                const mode = $("#node-input-mode").val();
+                if (mode === "time") {
+                    $(".buffer-size-row").hide();
+                    $(".time-span-row").show();
+                } else {
+                    $(".buffer-size-row").show();
+                    $(".time-span-row").hide();
+                }
+            }
+
+            $("#node-input-mode").on("change", updateFields);
+            updateFields();
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="rx-buffer">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-mode"><i class="fa fa-list"></i> Mode</label>
+        <select id="node-input-mode">
+            <option value="count">Buffer by Count</option>
+            <option value="time">Buffer by Time</option>
+        </select>
+    </div>
+    <div class="form-row buffer-size-row">
+        <label for="node-input-bufferSize"><i class="fa fa-hashtag"></i> Buffer Size</label>
+        <input type="number" id="node-input-bufferSize" min="1" value="5">
+    </div>
+    <div class="form-row time-span-row">
+        <label for="node-input-timeSpan"><i class="fa fa-clock-o"></i> Time Span (ms)</label>
+        <input type="number" id="node-input-timeSpan" min="1" value="1000">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="rx-buffer">
+    <p>Buffers incoming values and emits them as arrays.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Value to buffer</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">array</span></dt>
+        <dd>Array of buffered values</dd>
+        <dt>bufferSize <span class="property-type">number</span></dt>
+        <dd>Number of items in the buffer</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node collects incoming values and emits them as arrays based on
+    the configured mode.</p>
+
+    <h3>Modes</h3>
+    <ul>
+        <li><b>Buffer by Count</b> - Emit when buffer reaches specified size</li>
+        <li><b>Buffer by Time</b> - Emit at regular time intervals</li>
+    </ul>
+
+    <h3>Use Cases</h3>
+    <ul>
+        <li>Batch processing - collect N items then process</li>
+        <li>Time-windowed aggregation</li>
+        <li>Reducing database write frequency</li>
+        <li>Batch API calls</li>
+    </ul>
+
+    <h3>Example</h3>
+    <p>Buffer by count (size=3):</p>
+    <pre>
+Input:  1--2--3--4--5--6
+Output: ------[1,2,3]------[4,5,6]
+    </pre>
+</script>

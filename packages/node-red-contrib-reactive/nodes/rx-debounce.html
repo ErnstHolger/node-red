@@ -1,0 +1,77 @@
+<style>
+    .rx-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="rx-debounce"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('rx-debounce', {
+        category: 'reactive',
+        color: '#B7178C',
+        defaults: {
+            name: { value: "" },
+            time: { value: 500, validate: RED.validators.number() }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-clock-o",
+        label: function() {
+            return this.name || `debounce ${this.time}ms`;
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " rx-white-text";
+        },
+        paletteLabel: "debounce"
+    });
+</script>
+
+<script type="text/html" data-template-name="rx-debounce">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-time"><i class="fa fa-clock-o"></i> Time (ms)</label>
+        <input type="number" id="node-input-time" min="1" value="500">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="rx-debounce">
+    <p>Emits a value only after a specified period of silence.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Value to debounce</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>The last value after the silence period</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node implements the RxJS <code>debounceTime</code> operator. It waits
+    for the specified time after the last input before emitting. If a new input
+    arrives before the time elapses, the timer resets.</p>
+
+    <h3>Use Cases</h3>
+    <ul>
+        <li>Search input - wait for user to stop typing</li>
+        <li>Window resize - wait for resize to complete</li>
+        <li>Form validation - validate after user stops editing</li>
+        <li>Rate limiting rapid events</li>
+    </ul>
+
+    <h3>Example</h3>
+    <p>With a 500ms debounce:</p>
+    <pre>
+Input:  A--B--C--------D--E
+        |  |  |        |  |
+Time:   0 100 200      800 900
+
+Output: ----------C-----------E
+                  |           |
+Time:             700         1400
+    </pre>
+</script>

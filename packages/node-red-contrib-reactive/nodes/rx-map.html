@@ -1,0 +1,75 @@
+<style>
+    .rx-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="rx-map"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('rx-map', {
+        category: 'reactive',
+        color: '#B7178C',
+        defaults: {
+            name: { value: "" },
+            expression: { value: "value", required: true }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-pencil",
+        label: function() {
+            return this.name || this.expression || "rx-map";
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " rx-white-text";
+        },
+        paletteLabel: "map"
+    });
+</script>
+
+<script type="text/html" data-template-name="rx-map">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-expression"><i class="fa fa-pencil"></i> Expression</label>
+        <input type="text" id="node-input-expression" placeholder="value * 2">
+    </div>
+    <div class="form-tips">
+        <p>Available variables: <code>value</code>, <code>index</code>, <code>msg</code></p>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="rx-map">
+    <p>Transforms each value using a JavaScript expression.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Value to transform</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Transformed value</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node applies a transformation expression to each incoming message payload.</p>
+
+    <h3>Expression Variables</h3>
+    <ul>
+        <li><code>value</code> - The current payload value</li>
+        <li><code>index</code> - Zero-based index of the message</li>
+        <li><code>msg</code> - The full message object</li>
+    </ul>
+
+    <h3>Examples</h3>
+    <ul>
+        <li><code>value * 2</code> - Double the value</li>
+        <li><code>value.toUpperCase()</code> - Convert string to uppercase</li>
+        <li><code>Math.round(value)</code> - Round a number</li>
+        <li><code>{ ...value, processed: true }</code> - Add a property to an object</li>
+        <li><code>value.filter(x => x > 0)</code> - Filter an array</li>
+        <li><code>index % 2 === 0 ? value : -value</code> - Alternate sign</li>
+    </ul>
+</script>

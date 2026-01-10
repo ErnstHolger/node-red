@@ -1,0 +1,86 @@
+<style>
+    .rx-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="rx-interval"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('rx-interval', {
+        category: 'reactive',
+        color: '#B7178C',
+        defaults: {
+            name: { value: "" },
+            interval: { value: 1000, validate: RED.validators.number() },
+            startOnDeploy: { value: true },
+            limit: { value: 0, validate: RED.validators.number() }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "timer.svg",
+        label: function() {
+            return this.name || `interval ${this.interval}ms`;
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " rx-white-text";
+        },
+        paletteLabel: "interval"
+    });
+</script>
+
+<script type="text/html" data-template-name="rx-interval">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-interval"><i class="fa fa-clock-o"></i> Interval (ms)</label>
+        <input type="number" id="node-input-interval" min="1" value="1000">
+    </div>
+    <div class="form-row">
+        <label for="node-input-limit"><i class="fa fa-hand-stop-o"></i> Limit</label>
+        <input type="number" id="node-input-limit" min="0" value="0" placeholder="0 = unlimited">
+    </div>
+    <div class="form-row">
+        <label for="node-input-startOnDeploy">
+            <input type="checkbox" id="node-input-startOnDeploy" style="width:auto; margin-left:0;">
+            Start on deploy
+        </label>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="rx-interval">
+    <p>Emits incrementing numbers at a specified interval.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">string</span></dt>
+        <dd>Control command: "start", "stop", or "reset"</dd>
+        <dt class="optional">interval <span class="property-type">number</span></dt>
+        <dd>Dynamically change the interval (ms)</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">number</span></dt>
+        <dd>Incrementing number starting from 0</dd>
+        <dt>count <span class="property-type">number</span></dt>
+        <dd>Total count of emissions</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node creates an RxJS interval observable that emits incrementing
+    numbers at the specified interval.</p>
+
+    <h3>Control Commands</h3>
+    <ul>
+        <li><code>start</code> - Start emitting</li>
+        <li><code>stop</code> - Stop emitting</li>
+        <li><code>reset</code> - Reset counter and restart</li>
+    </ul>
+
+    <h3>Properties</h3>
+    <ul>
+        <li><b>Interval</b> - Time between emissions in milliseconds</li>
+        <li><b>Limit</b> - Maximum emissions (0 = unlimited)</li>
+        <li><b>Start on deploy</b> - Begin emitting when flow starts</li>
+    </ul>
+</script>

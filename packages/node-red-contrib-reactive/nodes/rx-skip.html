@@ -1,0 +1,71 @@
+<style>
+    .rx-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="rx-skip"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('rx-skip', {
+        category: 'reactive',
+        color: '#B7178C',
+        defaults: {
+            name: { value: "" },
+            count: { value: 5, validate: RED.validators.number() }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-forward",
+        label: function() {
+            return this.name || `skip ${this.count}`;
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " rx-white-text";
+        },
+        paletteLabel: "skip"
+    });
+</script>
+
+<script type="text/html" data-template-name="rx-skip">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-count"><i class="fa fa-hashtag"></i> Count</label>
+        <input type="number" id="node-input-count" min="1" value="5">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="rx-skip">
+    <p>Skips the first N values, then passes all subsequent values.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Value to process</dd>
+        <dt class="optional">reset <span class="property-type">boolean</span></dt>
+        <dd>Set to true to reset the counter</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Values after skipping the first N</dd>
+        <dt>skipPassed <span class="property-type">number</span></dt>
+        <dd>Count of passed values</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node implements the RxJS <code>skip</code> operator. It ignores
+    the first N messages and then passes all subsequent messages through.</p>
+
+    <h3>Reset</h3>
+    <p>Send a message with <code>msg.reset = true</code> to reset the counter
+    and start skipping again.</p>
+
+    <h3>Example</h3>
+    <p>Skip 3:</p>
+    <pre>
+Input:  1--2--3--4--5--6
+Output: ----------4--5--6
+    </pre>
+</script>

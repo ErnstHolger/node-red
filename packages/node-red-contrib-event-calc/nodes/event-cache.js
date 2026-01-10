@@ -3,53 +3,17 @@
  *
  * Features:
  * - Map<topic, {value, ts, metadata}> for caching latest values
+ * - Stored in global context for visibility in sidebar
  * - EventEmitter for notifying subscribers on updates
- * - Wildcard matching (* for one or more chars, ? for exactly one char)
+ * - Exact topic matching for subscriptions
  * - LRU eviction when maxEntries exceeded
  * - Reference counting for cleanup
  */
 module.exports = function(RED) {
     const EventEmitter = require('events');
 
-    // Shared cache instances per config node ID
-    const cacheInstances = new Map();
-
-    /**
-     * Check if a pattern contains wildcards
-     * @param {string} pattern - Topic pattern
-     * @returns {boolean} - True if pattern contains * or ?
-     */
-    function hasWildcard(pattern) {
-        return pattern && (pattern.includes('*') || pattern.includes('?'));
-    }
-
-    /**
-     * Convert topic pattern to RegExp
-     *
-     * Wildcards:
-     * - '*' (asterisk): Matches one or more characters
-     *   Example: 'sensors/*' matches 'sensors/temp', 'sensors/room1/temp'
-     *
-     * - '?' (question mark): Matches exactly one character
-     *   Example: 'sensor?' matches 'sensor1', 'sensorA' but NOT 'sensor' or 'sensor12'
-     *
-     * @param {string} pattern - Topic pattern with wildcards
-     * @returns {RegExp} - Regular expression for matching
-     */
-    function patternToRegex(pattern) {
-        // Handle empty pattern or just *
-        if (!pattern || pattern === '*') {
-            return /^.+$/;
-        }
-
-        // Escape regex special characters except our wildcards (* and ?)
-        let regexStr = pattern
-            .replace(/[.^$|()[\]{}\\+#/]/g, '\\$&')  // Escape regex special chars (including /)
-            .replace(/\?/g, '.')                      // ? matches exactly one character
-            .replace(/\*/g, '.+');                    // * matches one or more characters
-
-        return new RegExp(`^${regexStr}$`);
-    }
+    // Shared instances for event emitters and subscriptions (not stored in context)
+    const sharedInstances = new Map();
 
     function EventCacheNode(config) {
         RED.nodes.createNode(this, config);
@@ -59,35 +23,46 @@ module.exports = function(RED) {
         node.maxEntries = parseInt(config.maxEntries) || 10000;
         node.ttl = parseInt(config.ttl) || 0; // 0 = no expiry
 
-        // Create or get shared cache instance
-        const cacheKey = node.id;
-        if (!cacheInstances.has(cacheKey)) {
-            cacheInstances.set(cacheKey, {
-                cache: new Map(),
+        // Context key for storing cache data (visible in sidebar)
+        const contextKey = `eventCache_${node.name.replace(/[^a-zA-Z0-9_]/g, '_')}`;
+        const globalContext = node.context().global;
+
+        // Create or get shared instance for emitters/subscriptions (not serializable)
+        const instanceKey = node.id;
+        if (!sharedInstances.has(instanceKey)) {
+            sharedInstances.set(instanceKey, {
                 emitter: new EventEmitter(),
-                // Optimized subscription storage:
-                // - exactSubscriptions: Map<topic, Map<subId, callback>> for O(1) exact match
-                // - wildcardSubscriptions: Map<subId, {pattern, regex, callback}> for pattern matching
-                exactSubscriptions: new Map(),
-                wildcardSubscriptions: new Map(),
+                // Subscription storage: Map<topic, Map<subId, callback>> for O(1) exact match
+                subscriptions: new Map(),
                 users: 0,
                 subscriptionCounter: 0
             });
         }
 
-        const instance = cacheInstances.get(cacheKey);
+        const instance = sharedInstances.get(instanceKey);
         instance.users++;
         instance.emitter.setMaxListeners(100); // Allow many subscribers
+
+        // Initialize cache in global context if not exists
+        if (!globalContext.get(contextKey)) {
+            globalContext.set(contextKey, {});
+        }
 
         // TTL cleanup interval
         let ttlInterval = null;
         if (node.ttl > 0) {
             ttlInterval = setInterval(() => {
                 const now = Date.now();
-                for (const [topic, entry] of instance.cache) {
-                    if (now - entry.ts > node.ttl) {
-                        instance.cache.delete(topic);
+                const cache = globalContext.get(contextKey) || {};
+                let changed = false;
+                for (const topic of Object.keys(cache)) {
+                    if (now - cache[topic].ts > node.ttl) {
+                        delete cache[topic];
+                        changed = true;
                     }
+                }
+                if (changed) {
+                    globalContext.set(contextKey, cache);
                 }
             }, Math.min(node.ttl, 60000)); // Check at most every minute
         }
@@ -105,13 +80,25 @@ module.exports = function(RED) {
                 metadata: metadata
             };
 
-            instance.cache.set(topic, entry);
+            const cache = globalContext.get(contextKey) || {};
+            cache[topic] = entry;
 
             // Enforce max entries (LRU eviction - remove oldest)
-            if (instance.cache.size > node.maxEntries) {
-                const firstKey = instance.cache.keys().next().value;
-                instance.cache.delete(firstKey);
+            const keys = Object.keys(cache);
+            if (keys.length > node.maxEntries) {
+                // Find oldest entry
+                let oldestKey = keys[0];
+                let oldestTs = cache[oldestKey].ts;
+                for (const key of keys) {
+                    if (cache[key].ts < oldestTs) {
+                        oldestTs = cache[key].ts;
+                        oldestKey = key;
+                    }
+                }
+                delete cache[oldestKey];
             }
+
+            globalContext.set(contextKey, cache);
 
             // Emit topic-specific update event
             instance.emitter.emit('update', topic, entry);
@@ -123,52 +110,23 @@ module.exports = function(RED) {
          * @returns {object|undefined} - The cached entry {value, ts, metadata} or undefined
          */
         node.getValue = function(topic) {
-            return instance.cache.get(topic);
+            const cache = globalContext.get(contextKey) || {};
+            return cache[topic];
         };
 
         /**
-         * Get all values matching a pattern
-         * @param {string} pattern - Pattern with * and ? wildcards
-         * @returns {Map} - Map of matching topic -> entry
-         */
-        node.getMatching = function(pattern) {
-            const regex = patternToRegex(pattern);
-            const results = new Map();
-
-            for (const [topic, entry] of instance.cache) {
-                if (regex.test(topic)) {
-                    results.set(topic, entry);
-                }
-            }
-
-            return results;
-        };
-
-        /**
-         * Subscribe to updates matching a pattern
-         * Optimized: exact matches use O(1) lookup, wildcards use pattern matching
-         * @param {string} pattern - Topic pattern with wildcards
-         * @param {Function} callback - Called with (topic, entry) on match
+         * Subscribe to updates for a specific topic
+         * @param {string} topic - The exact topic to subscribe to
+         * @param {Function} callback - Called with (topic, entry) on update
          * @returns {string} - Subscription ID for unsubscribe
          */
-        node.subscribe = function(pattern, callback) {
+        node.subscribe = function(topic, callback) {
             const subId = `sub_${++instance.subscriptionCounter}`;
 
-            if (hasWildcard(pattern)) {
-                // Wildcard pattern - store with regex for matching
-                const regex = patternToRegex(pattern);
-                instance.wildcardSubscriptions.set(subId, {
-                    pattern: pattern,
-                    regex: regex,
-                    callback: callback
-                });
-            } else {
-                // Exact match - store in topic-indexed map for O(1) lookup
-                if (!instance.exactSubscriptions.has(pattern)) {
-                    instance.exactSubscriptions.set(pattern, new Map());
-                }
-                instance.exactSubscriptions.get(pattern).set(subId, callback);
+            if (!instance.subscriptions.has(topic)) {
+                instance.subscriptions.set(topic, new Map());
             }
+            instance.subscriptions.get(topic).set(subId, callback);
 
             return subId;
         };
@@ -178,17 +136,11 @@ module.exports = function(RED) {
          * @param {string} subscriptionId - The subscription ID to remove
          */
         node.unsubscribe = function(subscriptionId) {
-            // Try wildcard subscriptions first
-            if (instance.wildcardSubscriptions.delete(subscriptionId)) {
-                return;
-            }
-
-            // Search exact subscriptions
-            for (const [topic, subs] of instance.exactSubscriptions) {
+            for (const [topic, subs] of instance.subscriptions) {
                 if (subs.delete(subscriptionId)) {
                     // Clean up empty topic maps
                     if (subs.size === 0) {
-                        instance.exactSubscriptions.delete(topic);
+                        instance.subscriptions.delete(topic);
                     }
                     return;
                 }
@@ -200,7 +152,8 @@ module.exports = function(RED) {
          * @returns {string[]} - Array of all topic keys
          */
         node.getTopics = function() {
-            return Array.from(instance.cache.keys());
+            const cache = globalContext.get(contextKey) || {};
+            return Object.keys(cache);
         };
 
         /**
@@ -208,36 +161,24 @@ module.exports = function(RED) {
          * @returns {number} - Cache size
          */
         node.size = function() {
-            return instance.cache.size;
+            const cache = globalContext.get(contextKey) || {};
+            return Object.keys(cache).length;
         };
 
         /**
          * Clear all entries from cache
          */
         node.clear = function() {
-            instance.cache.clear();
+            globalContext.set(contextKey, {});
         };
 
-        // Internal: dispatch updates to matching subscriptions
-        // Optimized: O(1) for exact matches, O(w) for wildcard patterns
+        // Internal: dispatch updates to matching subscriptions (O(1) lookup)
         const updateHandler = (topic, entry) => {
-            // First: O(1) lookup for exact subscriptions
-            const exactSubs = instance.exactSubscriptions.get(topic);
-            if (exactSubs) {
-                for (const [subId, callback] of exactSubs) {
+            const subs = instance.subscriptions.get(topic);
+            if (subs) {
+                for (const [subId, callback] of subs) {
                     try {
                         callback(topic, entry);
-                    } catch (err) {
-                        RED.log.error(`[event-cache] Subscription callback error: ${err.message}`);
-                    }
-                }
-            }
-
-            // Second: iterate only wildcard subscriptions (typically fewer)
-            for (const [subId, sub] of instance.wildcardSubscriptions) {
-                if (sub.regex.test(topic)) {
-                    try {
-                        sub.callback(topic, entry);
                     } catch (err) {
                         RED.log.error(`[event-cache] Subscription callback error: ${err.message}`);
                     }
@@ -254,11 +195,10 @@ module.exports = function(RED) {
 
             instance.users--;
             if (instance.users <= 0) {
-                instance.cache.clear();
-                instance.exactSubscriptions.clear();
-                instance.wildcardSubscriptions.clear();
+                // Don't clear the context cache - let it persist
+                instance.subscriptions.clear();
                 instance.emitter.removeAllListeners();
-                cacheInstances.delete(cacheKey);
+                sharedInstances.delete(instanceKey);
             }
             done();
         });
@@ -281,11 +221,11 @@ module.exports = function(RED) {
     RED.httpAdmin.get("/event-cache/:id/stats", function(req, res) {
         const node = RED.nodes.getNode(req.params.id);
         if (node) {
-            const instance = cacheInstances.get(node.id);
-            let exactSubCount = 0;
+            const instance = sharedInstances.get(node.id);
+            let subCount = 0;
             if (instance) {
-                for (const subs of instance.exactSubscriptions.values()) {
-                    exactSubCount += subs.size;
+                for (const subs of instance.subscriptions.values()) {
+                    subCount += subs.size;
                 }
             }
             res.json({
@@ -294,9 +234,8 @@ module.exports = function(RED) {
                 maxEntries: node.maxEntries,
                 ttl: node.ttl,
                 subscriptions: {
-                    exact: exactSubCount,
-                    wildcard: instance ? instance.wildcardSubscriptions.size : 0,
-                    exactTopics: instance ? instance.exactSubscriptions.size : 0
+                    count: subCount,
+                    topics: instance ? instance.subscriptions.size : 0
                 }
             });
         } else {
@@ -317,11 +256,17 @@ module.exports = function(RED) {
     // HTTP Admin endpoint to get topics from all caches
     RED.httpAdmin.get("/event-cache/topics/all", function(req, res) {
         const allTopics = new Set();
-        for (const [cacheKey, instance] of cacheInstances) {
-            for (const topic of instance.cache.keys()) {
-                allTopics.add(topic);
+        // Get all event-cache nodes and collect their topics
+        RED.nodes.eachNode(function(n) {
+            if (n.type === 'event-cache') {
+                const cacheNode = RED.nodes.getNode(n.id);
+                if (cacheNode && cacheNode.getTopics) {
+                    for (const topic of cacheNode.getTopics()) {
+                        allTopics.add(topic);
+                    }
+                }
             }
-        }
+        });
         res.json(Array.from(allTopics).sort());
     });
 };

@@ -1,0 +1,116 @@
+<style>
+    .rx-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="rx-subject"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('rx-subject', {
+        category: 'reactive',
+        color: '#B7178C',
+        defaults: {
+            name: { value: "" },
+            context: { value: "", type: "rx-context", required: true },
+            subjectName: { value: "default", required: true },
+            subjectType: { value: "subject" },
+            initialValue: { value: "" },
+            bufferSize: { value: 1 }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "arrow-in.svg",
+        label: function() {
+            return this.name || this.subjectName || "rx-subject";
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " rx-white-text";
+        },
+        paletteLabel: "subject",
+        oneditprepare: function() {
+            const node = this;
+
+            // Show/hide fields based on subject type
+            function updateFields() {
+                const type = $("#node-input-subjectType").val();
+                if (type === "behavior") {
+                    $(".initial-value-row").show();
+                    $(".buffer-size-row").hide();
+                } else if (type === "replay") {
+                    $(".initial-value-row").hide();
+                    $(".buffer-size-row").show();
+                } else {
+                    $(".initial-value-row").hide();
+                    $(".buffer-size-row").hide();
+                }
+            }
+
+            $("#node-input-subjectType").on("change", updateFields);
+            updateFields();
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="rx-subject">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-context"><i class="fa fa-cog"></i> Context</label>
+        <input type="text" id="node-input-context">
+    </div>
+    <div class="form-row">
+        <label for="node-input-subjectName"><i class="fa fa-bookmark"></i> Stream Name</label>
+        <input type="text" id="node-input-subjectName" placeholder="default">
+    </div>
+    <div class="form-row">
+        <label for="node-input-subjectType"><i class="fa fa-list"></i> Type</label>
+        <select id="node-input-subjectType">
+            <option value="subject">Subject</option>
+            <option value="behavior">BehaviorSubject</option>
+            <option value="replay">ReplaySubject</option>
+        </select>
+    </div>
+    <div class="form-row initial-value-row">
+        <label for="node-input-initialValue"><i class="fa fa-pencil"></i> Initial Value</label>
+        <input type="text" id="node-input-initialValue" placeholder="null">
+    </div>
+    <div class="form-row buffer-size-row">
+        <label for="node-input-bufferSize"><i class="fa fa-database"></i> Buffer Size</label>
+        <input type="number" id="node-input-bufferSize" min="1" value="1">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="rx-subject">
+    <p>Creates or publishes to a named RxJS Subject stream.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Value to publish to the subject</dd>
+        <dt class="optional">subjectName <span class="property-type">string</span></dt>
+        <dd>Override the target subject name</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>The input message is passed through unchanged</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node publishes incoming message payloads to a named Subject stream
+    managed by the rx-context config node. Other nodes can subscribe to this
+    stream using rx-subscribe or rx-combine.</p>
+
+    <h3>Subject Types</h3>
+    <ul>
+        <li><b>Subject</b> - Basic subject with no initial value</li>
+        <li><b>BehaviorSubject</b> - Holds current value; new subscribers receive the latest value immediately</li>
+        <li><b>ReplaySubject</b> - Replays the last N values to new subscribers</li>
+    </ul>
+
+    <h3>References</h3>
+    <ul>
+        <li><a href="https://rxjs.dev/guide/subject">RxJS Subject Guide</a></li>
+    </ul>
+</script>

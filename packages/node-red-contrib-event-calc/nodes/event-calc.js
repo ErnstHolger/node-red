@@ -2,7 +2,7 @@
  * event-calc - Calculation node for multi-topic expressions
  *
  * Features:
- * - Maps multiple variables to topic patterns
+ * - Maps variables to exact topics
  * - Evaluates JavaScript expressions when inputs update
  * - Trigger modes: 'any' (any input updates) or 'all' (all inputs have values)
  * - Safe expression evaluation using Function constructor
@@ -10,6 +10,7 @@
  * - Built-in helper functions for common operations
  */
 module.exports = function(RED) {
+
     // Helper functions available in expressions
     const helpers = {
         // Math shortcuts
@@ -67,7 +68,6 @@ module.exports = function(RED) {
         node.outputTopic = config.outputTopic || 'calc/result';
 
         const subscriptionIds = [];
-        const latestValues = new Map(); // name -> { topic, value, ts }
 
         if (!node.cacheConfig) {
             node.status({ fill: "red", shape: "ring", text: "no cache configured" });
@@ -84,32 +84,43 @@ module.exports = function(RED) {
             return;
         }
 
+        // Track subscribed topics to ignore updates from our own output
+        const subscribedTopics = new Set();
+        for (const input of node.inputMappings) {
+            const topicName = input.topic || input.pattern;
+            if (topicName) {
+                subscribedTopics.add(topicName);
+            }
+        }
+
         /**
          * Attempt to calculate and output result
          */
-        function tryCalculate(triggerTopic) {
-            // Check if we should trigger
+        function tryCalculate(triggerTopic, latestValues) {
+            // Ignore updates triggered by our own output
+            if (triggerTopic === node.outputTopic) {
+                return;
+            }
+
             if (node.triggerOn === 'all') {
-                // All inputs must have values
                 for (const input of node.inputMappings) {
                     if (!latestValues.has(input.name)) {
-                        return; // Not all values available yet
+                        return;
                     }
                 }
             }
 
-            // At least one value must exist to calculate
             if (latestValues.size === 0) {
                 return;
             }
 
-            // Build context object for expression evaluation
             const context = {};
             const inputDetails = {};
+            const missingInputs = [];
 
             for (const input of node.inputMappings) {
                 const data = latestValues.get(input.name);
-                if (data) {
+                if (data && data.value !== undefined && data.value !== null) {
                     context[input.name] = data.value;
                     inputDetails[input.name] = {
                         topic: data.topic,
@@ -118,63 +129,98 @@ module.exports = function(RED) {
                     };
                 } else {
                     context[input.name] = undefined;
+                    missingInputs.push(input.name);
                 }
             }
 
-            // Evaluate expression safely
+            // Build topics mapping: variable name -> topic
+            const topics = { _output: node.outputTopic };
+            const timestamps = {};
+            for (const [name, details] of Object.entries(inputDetails)) {
+                topics[name] = details.topic;
+                timestamps[name] = details.ts;
+            }
+
             try {
-                // Create a function with named parameters from context + helpers
                 const allParams = { ...helpers, ...context };
                 const paramNames = Object.keys(allParams);
                 const paramValues = Object.values(allParams);
 
-                // Build function body with helpers and variables available
                 const fn = new Function(...paramNames, `return ${node.expression};`);
                 const result = fn(...paramValues);
+
+                // Check for NaN or invalid result
+                if (typeof result === 'number' && isNaN(result)) {
+                    const errorMsg = {
+                        topic: node.outputTopic,
+                        payload: {
+                            error: 'Expression resulted in NaN',
+                            missingInputs: missingInputs,
+                            expression: node.expression
+                        },
+                        inputs: inputDetails,
+                        trigger: triggerTopic,
+                        timestamp: Date.now()
+                    };
+                    node.send([null, errorMsg]);
+                    node.status({ fill: "yellow", shape: "ring", text: "NaN" });
+                    return;
+                }
 
                 const msg = {
                     topic: node.outputTopic,
                     payload: result,
+                    topics: topics,
                     inputs: inputDetails,
+                    timestamps: timestamps,
                     expression: node.expression,
                     trigger: triggerTopic,
                     timestamp: Date.now()
                 };
 
-                node.send(msg);
+                node.send([msg, null]);
 
-                // Store result back in cache so it can be used by other calculations
                 node.cacheConfig.setValue(node.outputTopic, result, {
                     source: 'event-calc',
                     expression: node.expression,
                     inputs: Object.keys(inputDetails)
                 });
 
-                // Update status with result (truncate if too long)
                 const resultStr = String(result);
                 const displayResult = resultStr.length > 15 ? resultStr.substring(0, 12) + '...' : resultStr;
                 node.status({ fill: "green", shape: "dot", text: `= ${displayResult}` });
 
             } catch (err) {
+                const errorMsg = {
+                    topic: node.outputTopic,
+                    payload: {
+                        error: err.message,
+                        expression: node.expression,
+                        context: context
+                    },
+                    inputs: inputDetails,
+                    trigger: triggerTopic,
+                    timestamp: Date.now()
+                };
+                node.send([null, errorMsg]);
                 node.status({ fill: "red", shape: "ring", text: "eval error" });
-                node.error(`Expression evaluation failed: ${err.message}`, { expression: node.expression, context: context });
             }
         }
 
-        // Subscribe to each input pattern
-        for (const input of node.inputMappings) {
-            if (!input.name || !input.pattern) {
-                continue;
-            }
+        // Subscribe to inputs
+        const latestValues = new Map();
 
-            const subId = node.cacheConfig.subscribe(input.pattern, (topic, entry) => {
+        for (const input of node.inputMappings) {
+            const topicName = input.topic || input.pattern;
+            if (!input.name || !topicName) continue;
+
+            const subId = node.cacheConfig.subscribe(topicName, (topic, entry) => {
                 latestValues.set(input.name, {
                     topic: topic,
                     value: entry.value,
                     ts: entry.ts
                 });
-
-                tryCalculate(topic);
+                tryCalculate(topic, latestValues);
             });
             subscriptionIds.push(subId);
         }
@@ -193,9 +239,11 @@ module.exports = function(RED) {
                 node.status({ fill: "blue", shape: "dot", text: "expr updated" });
             }
 
-            // Force recalculation
+            // Force recalculation (use special topic to bypass self-output check)
             if (msg.payload === 'recalc' || msg.topic === 'recalc') {
-                tryCalculate('manual');
+                if (latestValues.size > 0) {
+                    tryCalculate('_recalc', latestValues);
+                }
             }
 
             done();
@@ -208,7 +256,6 @@ module.exports = function(RED) {
                 }
             }
             subscriptionIds.length = 0;
-            latestValues.clear();
             done();
         });
     }

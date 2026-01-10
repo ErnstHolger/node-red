@@ -1,0 +1,45 @@
+<script type="text/javascript">
+    RED.nodes.registerType('rx-context', {
+        category: 'config',
+        defaults: {
+            name: { value: "" }
+        },
+        label: function() {
+            return this.name || "rx-context";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="rx-context">
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-config-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="rx-context">
+    <p>Configuration node that manages named RxJS streams.</p>
+
+    <h3>Details</h3>
+    <p>This config node acts as a central registry for named Subject streams.
+    Other reactive nodes (rx-subject, rx-subscribe, rx-combine) reference this
+    context to share streams across the flow.</p>
+
+    <h3>API</h3>
+    <p>The context provides these methods for use by other nodes:</p>
+    <ul>
+        <li><code>getSubject(name, type, initialValue, bufferSize)</code> - Get or create a subject</li>
+        <li><code>publish(name, value)</code> - Publish a value to a named subject</li>
+        <li><code>subscribe(name, callback)</code> - Subscribe to a named subject</li>
+        <li><code>unsubscribe(id)</code> - Unsubscribe by ID</li>
+        <li><code>hasSubject(name)</code> - Check if a subject exists</li>
+        <li><code>getSubjectNames()</code> - Get all subject names</li>
+    </ul>
+
+    <h3>Subject Types</h3>
+    <ul>
+        <li><b>Subject</b> - Basic subject, no initial value</li>
+        <li><b>BehaviorSubject</b> - Holds current value, new subscribers get latest</li>
+        <li><b>ReplaySubject</b> - Replays buffered values to new subscribers</li>
+    </ul>
+</script>

@@ -1,0 +1,76 @@
+<style>
+    .rx-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="rx-filter"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('rx-filter', {
+        category: 'reactive',
+        color: '#B7178C',
+        defaults: {
+            name: { value: "" },
+            condition: { value: "true", required: true }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-filter",
+        label: function() {
+            return this.name || this.condition || "rx-filter";
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " rx-white-text";
+        },
+        paletteLabel: "filter"
+    });
+</script>
+
+<script type="text/html" data-template-name="rx-filter">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-condition"><i class="fa fa-filter"></i> Condition</label>
+        <input type="text" id="node-input-condition" placeholder="value > 10">
+    </div>
+    <div class="form-tips">
+        <p>Available variables: <code>value</code>, <code>index</code>, <code>msg</code></p>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="rx-filter">
+    <p>Filters values based on a condition expression.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Value to evaluate</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Value (only if condition is true)</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node evaluates a condition expression for each incoming message.
+    Only messages where the condition evaluates to true are passed through.</p>
+
+    <h3>Condition Variables</h3>
+    <ul>
+        <li><code>value</code> - The current payload value</li>
+        <li><code>index</code> - Zero-based index of the message</li>
+        <li><code>msg</code> - The full message object</li>
+    </ul>
+
+    <h3>Examples</h3>
+    <ul>
+        <li><code>value > 10</code> - Values greater than 10</li>
+        <li><code>value !== null</code> - Non-null values</li>
+        <li><code>value.status === 'active'</code> - Active items only</li>
+        <li><code>value.length > 0</code> - Non-empty strings/arrays</li>
+        <li><code>index % 2 === 0</code> - Every other message</li>
+        <li><code>msg.topic === 'sensor'</code> - Filter by topic</li>
+    </ul>
+</script>

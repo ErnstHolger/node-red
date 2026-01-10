@@ -1,0 +1,94 @@
+<style>
+    .rx-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="rx-throttle"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('rx-throttle', {
+        category: 'reactive',
+        color: '#B7178C',
+        defaults: {
+            name: { value: "" },
+            time: { value: 1000, validate: RED.validators.number() },
+            leading: { value: true },
+            trailing: { value: false }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-tachometer",
+        label: function() {
+            return this.name || `throttle ${this.time}ms`;
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " rx-white-text";
+        },
+        paletteLabel: "throttle"
+    });
+</script>
+
+<script type="text/html" data-template-name="rx-throttle">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-time"><i class="fa fa-clock-o"></i> Time (ms)</label>
+        <input type="number" id="node-input-time" min="1" value="1000">
+    </div>
+    <div class="form-row">
+        <label for="node-input-leading">
+            <input type="checkbox" id="node-input-leading" style="width:auto; margin-left:0;" checked>
+            Emit on leading edge
+        </label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-trailing">
+            <input type="checkbox" id="node-input-trailing" style="width:auto; margin-left:0;">
+            Emit on trailing edge
+        </label>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="rx-throttle">
+    <p>Emits at most once per time window.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Value to throttle</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Throttled value</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node implements the RxJS <code>throttleTime</code> operator. It limits
+    emissions to at most one per time window.</p>
+
+    <h3>Options</h3>
+    <ul>
+        <li><b>Leading</b> - Emit immediately on first input of window</li>
+        <li><b>Trailing</b> - Emit last value at end of window</li>
+    </ul>
+
+    <h3>Use Cases</h3>
+    <ul>
+        <li>Rate limiting API calls</li>
+        <li>Scroll event handling</li>
+        <li>Button click protection</li>
+        <li>Sensor data sampling</li>
+    </ul>
+
+    <h3>Example (leading=true, trailing=false)</h3>
+    <pre>
+Input:  A-B-C-D-----E-F-G
+        |           |
+Time:   0           1000ms
+
+Output: A-----------E
+        |           |
+    </pre>
+</script>

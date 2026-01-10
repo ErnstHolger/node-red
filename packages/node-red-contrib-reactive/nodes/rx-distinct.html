@@ -1,0 +1,92 @@
+<style>
+    .rx-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="rx-distinct"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('rx-distinct', {
+        category: 'reactive',
+        color: '#B7178C',
+        defaults: {
+            name: { value: "" },
+            mode: { value: "untilChanged" },
+            keySelector: { value: "" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-snowflake-o",
+        label: function() {
+            return this.name || "distinct";
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " rx-white-text";
+        },
+        paletteLabel: "distinct"
+    });
+</script>
+
+<script type="text/html" data-template-name="rx-distinct">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-mode"><i class="fa fa-list"></i> Mode</label>
+        <select id="node-input-mode">
+            <option value="untilChanged">Distinct Until Changed</option>
+            <option value="all">Distinct (All Time)</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-keySelector"><i class="fa fa-key"></i> Key Selector</label>
+        <input type="text" id="node-input-keySelector" placeholder="value.id">
+    </div>
+    <div class="form-tips">
+        <p>Key selector extracts a comparison key. Leave empty to compare the entire value.</p>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="rx-distinct">
+    <p>Emits only when the value changes.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Value to check for distinctness</dd>
+        <dt class="optional">reset <span class="property-type">boolean</span></dt>
+        <dd>Set to true to reset the state</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Distinct values only</dd>
+    </dl>
+
+    <h3>Modes</h3>
+    <ul>
+        <li><b>Distinct Until Changed</b> - Only emit when different from the previous value</li>
+        <li><b>Distinct (All Time)</b> - Only emit values never seen before</li>
+    </ul>
+
+    <h3>Key Selector</h3>
+    <p>Optionally specify an expression to extract a comparison key:</p>
+    <ul>
+        <li><code>value.id</code> - Compare by id property</li>
+        <li><code>value.name</code> - Compare by name property</li>
+        <li><code>JSON.stringify(value)</code> - Deep comparison</li>
+    </ul>
+
+    <h3>Examples</h3>
+    <p>Distinct until changed:</p>
+    <pre>
+Input:  1--1--2--2--2--1--3
+Output: 1-----2--------1--3
+    </pre>
+
+    <p>Distinct all time:</p>
+    <pre>
+Input:  1--1--2--2--2--1--3
+Output: 1-----2-----------3
+    </pre>
+</script>

@@ -1,0 +1,91 @@
+<style>
+    .rx-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="rx-scan"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('rx-scan', {
+        category: 'reactive',
+        color: '#B7178C',
+        defaults: {
+            name: { value: "" },
+            expression: { value: "acc + value", required: true },
+            initialValue: { value: "0" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-plus-circle",
+        label: function() {
+            return this.name || this.expression || "rx-scan";
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " rx-white-text";
+        },
+        paletteLabel: "scan"
+    });
+</script>
+
+<script type="text/html" data-template-name="rx-scan">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-expression"><i class="fa fa-code"></i> Expression</label>
+        <input type="text" id="node-input-expression" placeholder="acc + value">
+    </div>
+    <div class="form-row">
+        <label for="node-input-initialValue"><i class="fa fa-pencil"></i> Initial Value</label>
+        <input type="text" id="node-input-initialValue" placeholder="0">
+    </div>
+    <div class="form-tips">
+        <p>Variables: <code>acc</code> (accumulator), <code>value</code>, <code>index</code>, <code>msg</code></p>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="rx-scan">
+    <p>Accumulates values like reduce, emitting each intermediate result.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Value to accumulate</dd>
+        <dt class="optional">reset <span class="property-type">boolean</span></dt>
+        <dd>Set to true to reset the accumulator</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Current accumulated value</dd>
+        <dt>scanIndex <span class="property-type">number</span></dt>
+        <dd>Number of values accumulated</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node implements the RxJS <code>scan</code> operator. Unlike reduce,
+    it emits the intermediate accumulated value after each input.</p>
+
+    <h3>Expression Variables</h3>
+    <ul>
+        <li><code>acc</code> - Current accumulator value</li>
+        <li><code>value</code> - Current input value</li>
+        <li><code>index</code> - Zero-based index</li>
+        <li><code>msg</code> - Full message object</li>
+    </ul>
+
+    <h3>Examples</h3>
+    <table>
+        <tr><th>Expression</th><th>Initial</th><th>Description</th></tr>
+        <tr><td><code>acc + value</code></td><td>0</td><td>Running sum</td></tr>
+        <tr><td><code>acc * value</code></td><td>1</td><td>Running product</td></tr>
+        <tr><td><code>acc.concat(value)</code></td><td>[]</td><td>Collect into array</td></tr>
+        <tr><td><code>Math.max(acc, value)</code></td><td>-Infinity</td><td>Running max</td></tr>
+        <tr><td><code>Math.min(acc, value)</code></td><td>Infinity</td><td>Running min</td></tr>
+        <tr><td><code>(acc * index + value) / (index + 1)</code></td><td>0</td><td>Running average</td></tr>
+    </table>
+
+    <h3>Reset</h3>
+    <p>Send a message with <code>msg.reset = true</code> to reset the accumulator
+    to its initial value.</p>
+</script>

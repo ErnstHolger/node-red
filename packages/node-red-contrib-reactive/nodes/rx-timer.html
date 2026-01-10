@@ -1,0 +1,92 @@
+<style>
+    .rx-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="rx-timer"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('rx-timer', {
+        category: 'reactive',
+        color: '#B7178C',
+        defaults: {
+            name: { value: "" },
+            delay: { value: 1000, validate: RED.validators.number() },
+            period: { value: 0, validate: RED.validators.number() },
+            startOnDeploy: { value: true }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "timer.svg",
+        label: function() {
+            if (this.name) return this.name;
+            if (this.period > 0) {
+                return `timer ${this.delay}ms/${this.period}ms`;
+            }
+            return `timer ${this.delay}ms`;
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " rx-white-text";
+        },
+        paletteLabel: "timer"
+    });
+</script>
+
+<script type="text/html" data-template-name="rx-timer">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-delay"><i class="fa fa-clock-o"></i> Initial Delay (ms)</label>
+        <input type="number" id="node-input-delay" min="0" value="1000">
+    </div>
+    <div class="form-row">
+        <label for="node-input-period"><i class="fa fa-repeat"></i> Period (ms)</label>
+        <input type="number" id="node-input-period" min="0" value="0" placeholder="0 = emit once">
+    </div>
+    <div class="form-row">
+        <label for="node-input-startOnDeploy">
+            <input type="checkbox" id="node-input-startOnDeploy" style="width:auto; margin-left:0;">
+            Start on deploy
+        </label>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="rx-timer">
+    <p>Emits after an initial delay, optionally repeating at regular intervals.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">string</span></dt>
+        <dd>Control command: "start" or "stop"</dd>
+        <dt class="optional">delay <span class="property-type">number</span></dt>
+        <dd>Dynamically change the initial delay (ms)</dd>
+        <dt class="optional">period <span class="property-type">number</span></dt>
+        <dd>Dynamically change the repeat period (ms)</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">number</span></dt>
+        <dd>Incrementing number starting from 0</dd>
+        <dt>count <span class="property-type">number</span></dt>
+        <dd>Total count of emissions</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node creates an RxJS timer observable that waits for the initial
+    delay, then emits. If a period is specified, it continues emitting at
+    that interval.</p>
+
+    <h3>Properties</h3>
+    <ul>
+        <li><b>Initial Delay</b> - Time to wait before first emission (ms)</li>
+        <li><b>Period</b> - Time between subsequent emissions (0 = emit once)</li>
+        <li><b>Start on deploy</b> - Begin timer when flow starts</li>
+    </ul>
+
+    <h3>Control Commands</h3>
+    <ul>
+        <li><code>start</code> - Start the timer</li>
+        <li><code>stop</code> - Stop the timer</li>
+    </ul>
+</script>

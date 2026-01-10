@@ -1,0 +1,137 @@
+<style>
+    .rx-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="rx-combine"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('rx-combine', {
+        category: 'reactive',
+        color: '#B7178C',
+        defaults: {
+            name: { value: "" },
+            context: { value: "", type: "rx-context", required: true },
+            streams: { value: [] }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-object-group",
+        label: function() {
+            if (this.name) return this.name;
+            if (this.streams && this.streams.length > 0) {
+                const names = this.streams.map(s => s.name).join(", ");
+                return names.length > 20 ? names.substring(0, 17) + "..." : names;
+            }
+            return "combine";
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " rx-white-text";
+        },
+        paletteLabel: "combine",
+        oneditprepare: function() {
+            const node = this;
+
+            // Initialize editable list for streams
+            $("#node-input-streams-container").css('min-height', '150px').css('min-width', '450px').editableList({
+                addItem: function(container, i, opt) {
+                    const row = $('<div/>').appendTo(container);
+                    $('<input/>', {
+                        type: 'text',
+                        class: 'stream-name',
+                        placeholder: 'Stream name',
+                        style: 'width: 100%'
+                    }).val(opt.name || '').appendTo(row);
+                },
+                removeItem: function(opt) {},
+                sortable: true,
+                removable: true
+            });
+
+            // Populate existing streams
+            if (node.streams) {
+                for (const stream of node.streams) {
+                    $("#node-input-streams-container").editableList('addItem', stream);
+                }
+            }
+        },
+        oneditsave: function() {
+            const node = this;
+            const items = $("#node-input-streams-container").editableList('items');
+            node.streams = [];
+
+            items.each(function() {
+                const name = $(this).find('.stream-name').val().trim();
+                if (name) {
+                    node.streams.push({ name: name });
+                }
+            });
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="rx-combine">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-context"><i class="fa fa-cog"></i> Context</label>
+        <input type="text" id="node-input-context">
+    </div>
+    <div class="form-row">
+        <label><i class="fa fa-list"></i> Streams</label>
+    </div>
+    <div class="form-row node-input-streams-container-row">
+        <ol id="node-input-streams-container"></ol>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="rx-combine">
+    <p>Combines the latest values from multiple named streams.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt class="optional">streams <span class="property-type">array</span></dt>
+        <dd>Array of stream names to dynamically update subscriptions</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>Object with latest values from all streams</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node implements the RxJS <code>combineLatest</code> operator.
+    It subscribes to multiple named streams and emits an object containing
+    the latest value from each stream whenever any stream emits.</p>
+
+    <p>The output is only emitted after all streams have emitted at least one value.</p>
+
+    <h3>Output Format</h3>
+    <pre>
+{
+  "stream1": latestValue1,
+  "stream2": latestValue2,
+  ...
+}
+    </pre>
+
+    <h3>Use Cases</h3>
+    <ul>
+        <li>Combining sensor readings for calculations</li>
+        <li>Aggregating state from multiple sources</li>
+        <li>Creating derived values from multiple inputs</li>
+    </ul>
+
+    <h3>Example</h3>
+    <p>Combining temperature and humidity:</p>
+    <pre>
+temp:     --20----22--------24--
+humidity: -----60----65--------
+
+combined: -----{t:20,h:60}
+               --{t:22,h:60}
+               ----{t:22,h:65}
+               --------{t:24,h:65}
+    </pre>
+</script>

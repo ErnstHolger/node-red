@@ -4,7 +4,9 @@
       "Bash(npm view:*)",
       "Skill(publish-npm)",
       "Skill(publish-npm:*)",
-      "Bash(npm publish:*)"
+      "Bash(npm publish:*)",
+      "mcp__filesystem__create_directory",
+      "mcp__filesystem__list_directory"
     ]
   }
 }

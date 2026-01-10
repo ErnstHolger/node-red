@@ -1,0 +1,156 @@
+<style>
+    .event-calc-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="event-simulator"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('event-simulator', {
+        category: 'event calc',
+        color: '#758467',
+        defaults: {
+            name: { value: "" },
+            waveform: { value: "sinusoid" },
+            amplitude: { value: 1, validate: RED.validators.number() },
+            frequency: { value: 1, validate: RED.validators.number() },
+            offset: { value: 0, validate: RED.validators.number() },
+            interval: { value: 100, validate: RED.validators.number() },
+            startOnDeploy: { value: true },
+            noiseLevel: { value: 0, validate: RED.validators.number() },
+            topicCount: { value: 1, validate: RED.validators.number() },
+            phaseSpread: { value: true }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-signal",
+        label: function() {
+            return this.name || this.waveform || "simulator";
+        },
+        paletteLabel: "simulator",
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " event-calc-white-text";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="event-simulator">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name (used as topic base)">
+    </div>
+    <div class="form-row">
+        <label for="node-input-topicCount"><i class="fa fa-clone"></i> Topic Count</label>
+        <input type="number" id="node-input-topicCount" min="1" max="100" value="1">
+        <div class="form-tips">Number of topics to generate (Name1, Name2, ... if count > 1)</div>
+    </div>
+    <div class="form-row">
+        <label for="node-input-waveform"><i class="fa fa-signal"></i> Waveform</label>
+        <select id="node-input-waveform">
+            <option value="sinusoid">Sinusoid</option>
+            <option value="cosine">Cosine</option>
+            <option value="sawtooth">Sawtooth</option>
+            <option value="triangle">Triangle</option>
+            <option value="rectangle">Rectangle (Square)</option>
+            <option value="pulse">Pulse</option>
+            <option value="random">Random</option>
+            <option value="randomWalk">Random Walk</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-amplitude"><i class="fa fa-arrows-v"></i> Amplitude</label>
+        <input type="number" id="node-input-amplitude" step="0.1" value="1">
+    </div>
+    <div class="form-row">
+        <label for="node-input-frequency"><i class="fa fa-tachometer"></i> Frequency (Hz)</label>
+        <input type="number" id="node-input-frequency" step="0.1" min="0.001" value="1">
+    </div>
+    <div class="form-row">
+        <label for="node-input-offset"><i class="fa fa-arrows-h"></i> Offset</label>
+        <input type="number" id="node-input-offset" step="0.1" value="0">
+    </div>
+    <div class="form-row">
+        <label for="node-input-interval"><i class="fa fa-clock-o"></i> Interval (ms)</label>
+        <input type="number" id="node-input-interval" min="10" value="100">
+    </div>
+    <div class="form-row">
+        <label for="node-input-noiseLevel"><i class="fa fa-random"></i> Noise Level</label>
+        <input type="number" id="node-input-noiseLevel" step="0.01" min="0" max="1" value="0">
+        <div class="form-tips">Noise as fraction of amplitude (0-1)</div>
+    </div>
+    <div class="form-row">
+        <label for="node-input-phaseSpread">
+            <input type="checkbox" id="node-input-phaseSpread" style="width:auto; margin-left:0;" checked>
+            Phase spread (offset each topic's phase when count > 1)
+        </label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-startOnDeploy">
+            <input type="checkbox" id="node-input-startOnDeploy" style="width:auto; margin-left:0;" checked>
+            Start on deploy
+        </label>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="event-simulator">
+    <p>Generates simulated time-series data with various waveforms.</p>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">number</span></dt>
+        <dd>Generated value</dd>
+        <dt>topic <span class="property-type">string</span></dt>
+        <dd>Topic name. If count=1: uses Name. If count>1: uses Name1, Name2, etc.</dd>
+        <dt>timestamp <span class="property-type">number</span></dt>
+        <dd>Unix timestamp in ms</dd>
+    </dl>
+
+    <h3>Multiple Topics</h3>
+    <p>Set <b>Topic Count</b> > 1 to generate multiple messages per interval:</p>
+    <ul>
+        <li>Name="Sensor", Count=3 → topics: Sensor1, Sensor2, Sensor3</li>
+        <li><b>Phase Spread</b>: Each topic gets an evenly-distributed phase offset</li>
+        <li>Useful for simulating multiple related sensors</li>
+    </ul>
+
+    <h3>Waveforms</h3>
+    <ul>
+        <li><b>Sinusoid</b> - Smooth sine wave</li>
+        <li><b>Cosine</b> - Cosine wave (90° phase shift)</li>
+        <li><b>Sawtooth</b> - Linear ramp up, instant drop</li>
+        <li><b>Triangle</b> - Linear ramp up and down</li>
+        <li><b>Rectangle</b> - Square wave (±amplitude)</li>
+        <li><b>Pulse</b> - Short pulse (10% duty cycle)</li>
+        <li><b>Random</b> - Random values each sample</li>
+        <li><b>Random Walk</b> - Brownian motion with mean reversion</li>
+    </ul>
+
+    <h3>Parameters</h3>
+    <ul>
+        <li><b>Topic Count</b> - Number of topics to generate (1-100)</li>
+        <li><b>Amplitude</b> - Peak value (signal swings ±amplitude around offset)</li>
+        <li><b>Frequency</b> - Cycles per second (Hz)</li>
+        <li><b>Offset</b> - DC offset (center value)</li>
+        <li><b>Interval</b> - Sample rate in milliseconds</li>
+        <li><b>Noise Level</b> - Random noise as fraction of amplitude</li>
+        <li><b>Phase Spread</b> - Distribute phase offsets across topics</li>
+    </ul>
+
+    <h3>Control</h3>
+    <p>Send messages to control the simulator:</p>
+    <ul>
+        <li><code>msg.payload = "start"</code> - Start generating</li>
+        <li><code>msg.payload = "stop"</code> - Stop generating</li>
+        <li><code>msg.payload = "reset"</code> - Reset time and restart</li>
+    </ul>
+
+    <h3>Dynamic Parameters</h3>
+    <p>Update parameters via message properties:</p>
+    <ul>
+        <li><code>msg.amplitude</code></li>
+        <li><code>msg.frequency</code></li>
+        <li><code>msg.offset</code></li>
+        <li><code>msg.interval</code></li>
+        <li><code>msg.waveform</code></li>
+        <li><code>msg.topicCount</code></li>
+        <li><code>msg.phaseSpread</code></li>
+    </ul>
+</script>

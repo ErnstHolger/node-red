@@ -1,0 +1,70 @@
+<style>
+    .rx-white-text { fill: #ffffff !important; }
+    .red-ui-palette-node[data-palette-type="rx-merge"] .red-ui-palette-label { color: #ffffff !important; }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('rx-merge', {
+        category: 'reactive',
+        color: '#B7178C',
+        defaults: {
+            name: { value: "" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-code-fork",
+        label: function() {
+            return this.name || "merge";
+        },
+        labelStyle: function() {
+            return (this.name ? "node_label_italic" : "") + " rx-white-text";
+        },
+        paletteLabel: "merge"
+    });
+</script>
+
+<script type="text/html" data-template-name="rx-merge">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="rx-merge">
+    <p>Merges values from multiple input wires into a single output stream.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Values from any connected input</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>All values from all inputs</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node implements the RxJS <code>merge</code> operator concept.
+    Connect multiple wires to this node's input - all messages from all
+    sources are emitted through the single output.</p>
+
+    <p>This is useful for combining events from multiple sources into
+    a single stream for processing.</p>
+
+    <h3>Use Cases</h3>
+    <ul>
+        <li>Combining multiple sensor inputs</li>
+        <li>Merging events from different sources</li>
+        <li>Aggregating data streams</li>
+    </ul>
+
+    <h3>Example</h3>
+    <pre>
+Source A: --1-----3-----5--
+Source B: ----2-----4-----6
+
+Merged:   --1-2---3-4---5-6
+    </pre>
+</script>
